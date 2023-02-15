@@ -6,6 +6,9 @@ name = "pypi"
 [packages]
 flask = "*"
 transformers = "*"
+selenium = "*"
+webdriver-manager = "*"
+fake-useragent = "*"
 
 [dev-packages]
 yapf = "*"
