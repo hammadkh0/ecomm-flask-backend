@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 
-def scrape_data(url, HEADERS, input):
+def intial_config():
     ua = UserAgent()
     user_agent = ua.random
 
@@ -24,6 +24,12 @@ def scrape_data(url, HEADERS, input):
     # simulate headless mode by minimizing the window
     driver.set_window_size(1920, 1080)
     driver.set_window_position(-2000, 0)
+    return driver
+
+
+def find_product_list(url, HEADERS, input):
+
+    driver = intial_config()
 
     #load page with beautiful soup
     driver.get(url)
@@ -35,13 +41,6 @@ def scrape_data(url, HEADERS, input):
 
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.get_screenshot_as_file("screenshot3.png")
-
-    scraped_items = find_product_list(url, soup=soup)
-    driver.quit()
-    return scraped_items
-
-
-def find_product_list(url, soup):
 
     #soup2 = BeautifulSoup(driver.page_source, "html.parser")
     output = soup.find_all('div', {'data-component-type': 's-search-result'})
@@ -84,5 +83,5 @@ def find_product_list(url, soup):
         }
         scraped_items.append(data)
 
-    # driver.quit()
+    driver.quit()
     return scraped_items

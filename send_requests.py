@@ -1,5 +1,5 @@
 from agent_list import AGENT_LIST
-from scrape import scrape_data
+from scrape import find_product_list
 from pprint import pprint
 import time
 import random
@@ -12,7 +12,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-def send_request(url, HEADERS, user_input):
+def product_list_request(url, HEADERS, user_input):
     with TorRequests() as tor_requests:
         with tor_requests.get_session() as sess:
 
@@ -26,7 +26,12 @@ def send_request(url, HEADERS, user_input):
             #html_content = sess.get(url, headers=HEADERS, timeout=10).text
 
             # -- your scraping code here ..
-            data = scrape_data(url, HEADERS, user_input)
-            pprint(data)
+            data = find_product_list(url, HEADERS, user_input)
+            #pprint(data)
             # print("\n\n", len(data))
+
             return data
+
+
+def specific_product_request():
+    pass

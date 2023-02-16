@@ -3,23 +3,23 @@ from flask import Flask, request, json
 from logging.config import dictConfig
 from flask_cors import CORS
 from sentiment import polarity_scores_roberta
-from rotate_ip import send_request, AGENT_LIST
+from send_requests import product_list_request
+from agent_list import AGENT_LIST
 
 # create the Flask app
 app = Flask(__name__)
 CORS(app)
 
 
-@app.route('/find-products', methods=['POST'])
+@app.route('/ecomm/products', methods=['GET'])
 def get_products():
     request_data = request.get_json()
     url = request_data['url']
     input_term = request_data['input_term']
     products_list = []
     try:
-        products_list = send_request(url,
-                                     {"User-Agent": random.choice(AGENT_LIST)},
-                                     input_term)
+        products_list = product_list_request(
+            url, {"User-Agent": random.choice(AGENT_LIST)}, input_term)
     except Exception as e:
         print(e)
         pass
@@ -28,6 +28,13 @@ def get_products():
                                   status=200,
                                   mimetype='application/json')
     return response
+
+
+@app.route('/ecomm/products/<asin>', methods=['GET'])
+def get_single_product(asin):
+    return '''
+        The product is {}.
+    '''.format(asin)
 
 
 @app.route('/sentiment', methods=['POST'])
