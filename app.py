@@ -11,27 +11,34 @@ app = Flask(__name__)
 CORS(app)
 
 
-@app.route('/ecomm/products', methods=['GET'])
+@app.route('/ecomm/products', methods=['POST'])
 def get_products():
     request_data = request.get_json()
     url = request_data['url']
     input_term = request_data['input_term']
     products_list = []
+    total_items = 0
     try:
-        products_list = product_list_request(
-            url, {"User-Agent": random.choice(AGENT_LIST)}, input_term)
+        products_list, total_items = product_list_request(url, input_term)
     except Exception as e:
         print(e)
         pass
 
-    response = app.response_class(response=json.dumps(products_list),
+    response = app.response_class(response=json.dumps({
+        "number_of_items": total_items,
+        "products": products_list
+    }),
                                   status=200,
                                   mimetype='application/json')
     return response
 
 
-@app.route('/ecomm/products/<asin>', methods=['GET'])
+@app.route('/ecomm/products/<asin>', methods=['POST'])
 def get_single_product(asin):
+    request_data = request.get_json()
+    url = request_data['link']
+    asin = request_data['asin']
+
     return '''
         The product is {}.
     '''.format(asin)
