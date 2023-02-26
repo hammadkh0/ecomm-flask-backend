@@ -9,6 +9,10 @@ transformers = "*"
 selenium = "*"
 webdriver-manager = "*"
 fake-useragent = "*"
+pandas = "*"
+numpy = "*"
+nltk = "*"
+torch = "*"
 
 [dev-packages]
 yapf = "*"
