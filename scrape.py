@@ -120,7 +120,6 @@ def find_suppliers_list(input_term):
 
     driver.get("https://alibaba.com")
 
-    driver.get_screenshot_as_file("screenshot.png")
     driver.find_element(By.CLASS_NAME,
                         "ui-searchbar-keyword").send_keys(input_term)
 
@@ -143,16 +142,97 @@ def find_suppliers_list(input_term):
         img_div = "" if img_div is None else img_div['data-image']
 
         # find the title
-        title = row.find('p',
-                         {"class": "elements-title-normal__content medium"})
-        title = "" if title is None else title.text
+        title = row.find('h2', {"class": "elements-title-normal__outter"})
+        title_text = "" if title is None else title["title"]
+
+        #find the link
+        link = title.find('a')
+        link = "" if link is None else link['href']
+
+        # find the price range
+        price_range = row.find('span',
+                               {"class": "elements-offer-price-normal__price"})
+        price_range = "" if price_range is None else price_range.text
+
+        #find the min order quantity
+        min_order = row.find('span',
+                             {"class": "element-offer-minorder-normal__value"})
+        min_order = "" if min_order is None else min_order.text
+
+        #find other properties
+        extras = {}
+        details = row.find_all(
+            'p', {"class": "organic-list-offer-center__property-item"})
+        for item in details:
+            spans = item.find_all('span')
+            spans = [] if spans is None else spans
+            key = spans[0].text if len(spans) > 0 else ""
+            value = spans[1].text if len(spans) > 1 else ""
+            extras[key] = value
+
+        # find supplier details
+        # supplier country
+        supplier_country = row.find(
+            'span',
+            {"class": "seller-tag__country list-offer-seller-tag bg-visible"})
+        supplier_country = "" if supplier_country is None else supplier_country[
+            "title"]
+
+        # supplier name from a tag
+        supplier_name_a = row.find(
+            'a', {"class": "organic-list-offer__seller-company"})
+        supplier_name = "" if supplier_name_a is None else supplier_name_a.text
+
+        # supplier link
+        supplier_link = supplier_name_a[
+            'href'] if supplier_name_a is not None else ""
+
+        # check if supplier is verified
+        isVerified = row.find(
+            'i', {
+                "class":
+                "icbu-certificate-icon icbu-certificate-icon-verified supplier-tag-verified"
+            })
+        isVerified = False if isVerified is None else True
+
+        # check supplier rating
+        supplier_rating = row.find('span',
+                                   {"class": "seb-supplier-review__score"})
+        supplier_rating = "" if supplier_rating is None else supplier_rating.text
+
+        # check supplier level
+        supplier_level = row.find(
+            'a', {"class": "seller-start-level list-offer-seller-tag"})
+        diamonds = supplier_level.find_all('i')
+        # get class name from <i> in diamonds[0]
+        level = 0 if diamonds[0]['class'][3] is "dm-grey" else len(diamonds)
+
+        # supplier last 6 months orders
+        supplier_orders = row.find("div",
+                                   {"class": "company-sinfo-item__content"})
+        supplier_orders = "" if supplier_orders is None else supplier_orders.text
 
         data = {
-            "title": title,
-            "image": img_div,
+            "product": {
+                "title": title_text,
+                "image": img_div,
+                "link": link,
+                "price_range": price_range,
+                "min_order": min_order,
+                "details": extras
+            },
+            "supplier": {
+                "name": supplier_name,
+                "level": level,
+                "link": supplier_link,
+                "country": supplier_country,
+                "isVerified": isVerified,
+                "rating": supplier_rating,
+                "prev_orders": supplier_orders
+            }
         }
         scraped_items.append(data)
 
     driver.quit()
 
-    return {"item_count": len(scraped_items), "suppliers": scraped_items}
+    return {"item_count": len(scraped_items), "results": scraped_items}
