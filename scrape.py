@@ -112,18 +112,17 @@ def find_product_list(url, user_input):
 
     total_items = len(scraped_items)
     driver.quit()
-    return scraped_items, total_items
+    return {"products": scraped_items, "item_count": total_items}
 
 
-def find_suppliers_list():
+def find_suppliers_list(input_term):
     driver = intial_config()
 
     driver.get("https://alibaba.com")
 
     driver.get_screenshot_as_file("screenshot.png")
-    driver.find_element(
-        By.CLASS_NAME,
-        "ui-searchbar-keyword").send_keys("carburator motorcycle")
+    driver.find_element(By.CLASS_NAME,
+                        "ui-searchbar-keyword").send_keys(input_term)
 
     # click the input field to submit the search query
     driver.find_element(By.CLASS_NAME, "ui-searchbar-submit").click()
@@ -152,10 +151,8 @@ def find_suppliers_list():
             "title": title,
             "image": img_div,
         }
-        scraped_items.append(img_div)
+        scraped_items.append(data)
 
-    print(len(scraped_items), scraped_items)
     driver.quit()
 
-
-find_suppliers_list()
+    return {"item_count": len(scraped_items), "suppliers": scraped_items}
