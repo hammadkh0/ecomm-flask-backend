@@ -97,7 +97,7 @@ def scrape_alibaba_product_from_rows(row):
 
 
 def scrape_alibaba_supplier_from_rows(row):
-    # find supplier details
+
     # supplier country
     supplier_country = row.find(
         'span',
@@ -131,7 +131,7 @@ def scrape_alibaba_supplier_from_rows(row):
         'a', {"class": "seller-start-level list-offer-seller-tag"})
     diamonds = supplier_level.find_all('i')
     # get class name from <i> in diamonds[0]
-    level = 0 if diamonds[0]['class'][3] is "dm-grey" else len(diamonds)
+    level = 0 if diamonds[0]['class'][3] == "dm-grey" else len(diamonds)
 
     # supplier last 6 months orders
     supplier_orders = row.find("div", {"class": "company-sinfo-item__content"})

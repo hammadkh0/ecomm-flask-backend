@@ -17,6 +17,8 @@ def intial_config():
     options = Options()
     #options.add_argument("--headless")
     options.add_argument(f'user-agent={user_agent})')
+    # add incognito mode to options
+    options.add_argument("--incognito")
 
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),
                               options=options)
