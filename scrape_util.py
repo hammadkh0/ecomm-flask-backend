@@ -1,3 +1,7 @@
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+
+
 def scrape_amazon_product_from_rows(url, row):
     asin = row['data-asin']
 
@@ -97,7 +101,39 @@ def scrape_alibaba_product_from_rows(row):
     }
 
 
-def scrape_alibaba_supplier_from_rows(row):
+def scrape_alibaba_supplier_from_rows(row, driver):
+
+    # check if supplier is verified
+    isVerified = row.find(
+        'i', {"class": "icbu-certificate-icon icbu-certificate-icon-verified"})
+    isVerified = False if isVerified is None else True
+
+    # check if the supplier data is present in row format
+    supplier_row = row.find('div',
+                            {"class": "list-no-v2-decisionsup__row flex-row"})
+    # check if the supplier data is present in column format
+    supplier_col = row.find('div',
+                            {"class": "organic-list-offer-right type-simple"})
+    supplier_data = {}
+    # if row is None, then supplier data is in column format so scrape the column data as both have different classes and structure
+    if supplier_row is None:
+        supplier_data = scrape_sub_column(supplier_col)
+    else:
+        supplier_data = scrape_sub_row(supplier_row, driver)
+
+    # add the verified status to the supplier data
+    supplier_data["isVerified"] = isVerified
+
+    return supplier_data
+
+
+# ----------------- SCRAPING HELPERS -----------------
+def scrape_sub_column(row):
+
+    # supplier experience
+    supplier_experience = row.find(
+        "span", {"class": "seller-tag__year list-offer-seller-tag"})
+    supplier_experience = "" if supplier_experience is None else supplier_experience.text
 
     # supplier country
     supplier_country = row.find(
@@ -114,14 +150,6 @@ def scrape_alibaba_supplier_from_rows(row):
     # supplier link
     supplier_link = supplier_name_a[
         'href'] if supplier_name_a is not None else ""
-
-    # check if supplier is verified
-    isVerified = row.find(
-        'i', {
-            "class":
-            "icbu-certificate-icon icbu-certificate-icon-verified supplier-tag-verified"
-        })
-    isVerified = False if isVerified is None else True
 
     # check supplier rating
     supplier_rating = row.find('span', {"class": "seb-supplier-review__score"})
@@ -147,7 +175,64 @@ def scrape_alibaba_supplier_from_rows(row):
         "level": level,
         "link": supplier_link,
         "country": supplier_country,
-        "isVerified": isVerified,
         "rating": supplier_rating,
-        "prev_orders": supplier_orders
+        "prev_orders": supplier_orders,
+        "experience": supplier_experience
+    }
+
+
+def scrape_sub_row(row, driver):
+    # supplier experience
+    supplier_experience = row.find(
+        "span", {"class": "seller-tag__year flex-no-shrink"})
+    supplier_experience = "" if supplier_experience is None else supplier_experience.text
+
+    # supplier country
+    supplier_country = row.find(
+        'span', {"class": "seller-tag__country flex-no-shrink"})
+    supplier_country = "" if supplier_country is None else supplier_country[
+        "title"]
+
+    # supplier level
+    supplier_level = row.find(
+        'a', {"class": "seller-start-level gallery-offer-seller-tag"})
+
+    diamonds = supplier_level.find_all('i')
+    # get class name from <i> in diamonds[0]
+    level = 0 if diamonds[0]['class'][3] == "dm-grey" else len(diamonds)
+
+    # supplier rating
+    supplier_rating = row.find(
+        'span', {"class": "seb-supplier-review-gallery-test__score"})
+    supplier_rating = "" if supplier_rating is None else supplier_rating.span.text.strip(
+    )
+
+    # supplier name from a tag
+    supplier_popup = driver.find_element(By.CLASS_NAME, "tag-country-right")
+
+    # craete action chain object using webdriver to hover over the element
+    action = ActionChains(driver)
+    action.move_to_element(supplier_popup).pause(2).perform()
+
+    # find the supplier name and link from the popup that appears on hover
+    some_div = driver.find_element(By.CLASS_NAME, "next-overlay-wrapper")
+
+    # move to the div to make the popup stay visible and then find the elements
+    action.move_to_element(some_div).perform()
+
+    supplier_info = some_div.find_element(By.CLASS_NAME,
+                                          "supplier-tag-popup__content_href")
+
+    # supplier name
+    supplier_name = supplier_info.text
+    # supplier link
+    supplier_link = supplier_info.get_attribute("href")
+
+    return {
+        "name": supplier_name,
+        "level": level,
+        "link": supplier_link,
+        "country": supplier_country,
+        "rating": supplier_rating,
+        "experience": supplier_experience
     }

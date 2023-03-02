@@ -114,10 +114,8 @@ def find_suppliers_list(input_term):
     i = 0
     for row in output2:
 
+        supplier_info = scrape_alibaba_supplier_from_rows(row, driver)
         products_info = scrape_alibaba_product_from_rows(row)
-
-        # supplier_info = scrape_alibaba_supplier_from_rows(row)
-        supplier_info = {}
 
         data = {"id": i, "product": products_info, "supplier": supplier_info}
         scraped_items.append(data)
