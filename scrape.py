@@ -115,6 +115,8 @@ def find_suppliers_list(input_term):
     for row in output2:
 
         supplier_info = scrape_alibaba_supplier_from_rows(row, driver)
+        if len(supplier_info) == 0 or len(supplier_info) < 2:
+            continue
         products_info = scrape_alibaba_product_from_rows(row)
 
         data = {"id": i, "product": products_info, "supplier": supplier_info}

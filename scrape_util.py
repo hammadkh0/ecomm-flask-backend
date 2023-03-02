@@ -105,8 +105,14 @@ def scrape_alibaba_supplier_from_rows(row, driver):
 
     # check if supplier is verified
     isVerified = row.find(
-        'i', {"class": "icbu-certificate-icon icbu-certificate-icon-verified"})
+        'i', {
+            "class":
+            "icbu-certificate-icon icbu-certificate-icon-verified supplier-tag-verified"
+        })
     isVerified = False if isVerified is None else True
+
+    if isVerified is False:
+        return {}
 
     # check if the supplier data is present in row format
     supplier_row = row.find('div',
@@ -129,6 +135,20 @@ def scrape_alibaba_supplier_from_rows(row, driver):
 
 # ----------------- SCRAPING HELPERS -----------------
 def scrape_sub_column(row):
+
+    # check supplier level
+    supplier_level = row.find(
+        'a', {"class": "seller-start-level list-offer-seller-tag"})
+    if supplier_level is None:
+        supplier_level = row.find(
+            'a', {"class": "seller-start-level gallery-offer-seller-tag"})
+
+    diamonds = supplier_level.find_all('i')
+    # get class name from <i> in diamonds[0]
+    level = 0 if diamonds[0]['class'][3] == "dm-grey" else len(diamonds)
+
+    if level < 2:
+        return {}
 
     # supplier experience
     supplier_experience = row.find(
@@ -155,17 +175,6 @@ def scrape_sub_column(row):
     supplier_rating = row.find('span', {"class": "seb-supplier-review__score"})
     supplier_rating = "" if supplier_rating is None else supplier_rating.text
 
-    # check supplier level
-    supplier_level = row.find(
-        'a', {"class": "seller-start-level list-offer-seller-tag"})
-    if supplier_level is None:
-        supplier_level = row.find(
-            'a', {"class": "seller-start-level gallery-offer-seller-tag"})
-
-    diamonds = supplier_level.find_all('i')
-    # get class name from <i> in diamonds[0]
-    level = 0 if diamonds[0]['class'][3] == "dm-grey" else len(diamonds)
-
     # supplier last 6 months orders
     supplier_orders = row.find("div", {"class": "company-sinfo-item__content"})
     supplier_orders = "" if supplier_orders is None else supplier_orders.text
@@ -182,6 +191,17 @@ def scrape_sub_column(row):
 
 
 def scrape_sub_row(row, driver):
+    # supplier level
+    supplier_level = row.find(
+        'a', {"class": "seller-start-level gallery-offer-seller-tag"})
+
+    diamonds = supplier_level.find_all('i')
+    # get class name from <i> in diamonds[0]
+    level = 0 if diamonds[0]['class'][3] == "dm-grey" else len(diamonds)
+
+    if level < 2:
+        return {}
+
     # supplier experience
     supplier_experience = row.find(
         "span", {"class": "seller-tag__year flex-no-shrink"})
@@ -192,14 +212,6 @@ def scrape_sub_row(row, driver):
         'span', {"class": "seller-tag__country flex-no-shrink"})
     supplier_country = "" if supplier_country is None else supplier_country[
         "title"]
-
-    # supplier level
-    supplier_level = row.find(
-        'a', {"class": "seller-start-level gallery-offer-seller-tag"})
-
-    diamonds = supplier_level.find_all('i')
-    # get class name from <i> in diamonds[0]
-    level = 0 if diamonds[0]['class'][3] == "dm-grey" else len(diamonds)
 
     # supplier rating
     supplier_rating = row.find(
