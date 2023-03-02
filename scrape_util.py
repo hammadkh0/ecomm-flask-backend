@@ -79,6 +79,7 @@ def scrape_alibaba_product_from_rows(row):
     extras = {}
     details = row.find_all(
         'p', {"class": "organic-list-offer-center__property-item"})
+    details = [] if details is None else details
     for item in details:
         spans = item.find_all('span')
         spans = [] if spans is None else spans
@@ -129,6 +130,10 @@ def scrape_alibaba_supplier_from_rows(row):
     # check supplier level
     supplier_level = row.find(
         'a', {"class": "seller-start-level list-offer-seller-tag"})
+    if supplier_level is None:
+        supplier_level = row.find(
+            'a', {"class": "seller-start-level gallery-offer-seller-tag"})
+
     diamonds = supplier_level.find_all('i')
     # get class name from <i> in diamonds[0]
     level = 0 if diamonds[0]['class'][3] == "dm-grey" else len(diamonds)
