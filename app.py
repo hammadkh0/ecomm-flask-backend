@@ -3,7 +3,6 @@ from flask_cors import CORS
 from sentiment import get_sentiments
 from send_requests import product_list_request, specific_product_request
 from scrape import find_suppliers_list
-from agent_list import AGENT_LIST
 
 # create the Flask app
 app = Flask(__name__)
@@ -18,14 +17,19 @@ def get_products():
     products_data = {}
     try:
         products_data = product_list_request(url, input_term)
+        response = app.response_class(response=json.dumps(products_data),
+                                      status=200,
+                                      mimetype='application/json')
+        return response
     except Exception as e:
         print(e)
-        pass
-
-    response = app.response_class(response=json.dumps(products_data),
-                                  status=200,
-                                  mimetype='application/json')
-    return response
+        response = app.response_class(response=json.dumps({
+            "ERROR": str(e),
+            "status": 500
+        }),
+                                      status=500,
+                                      mimetype='application/json')
+        return response
 
 
 @app.route('/ecomm/products/<asin>', methods=['POST'])
@@ -53,14 +57,20 @@ def get_suppliers():
     suppliers_data = {}
     try:
         suppliers_data = find_suppliers_list(input_term)
+        response = app.response_class(response=json.dumps(suppliers_data),
+                                      status=200,
+                                      mimetype='application/json')
+        return response
+
     except Exception as e:
         print(e)
-        pass
-
-    response = app.response_class(response=json.dumps(suppliers_data),
-                                  status=200,
-                                  mimetype='application/json')
-    return response
+        response = app.response_class(response=json.dumps({
+            "error": str(e),
+            "status": 500
+        }),
+                                      status=500,
+                                      mimetype='application/json')
+        return response
 
 
 @app.route('/ecomm/sentiment', methods=['POST'])
@@ -85,15 +95,6 @@ def analyze_sentiment():
     # Length: {}
     #     The sentiment of the reviews are {}.
     # '''.format(len(sentiment_data), sentiment_data)
-
-
-@app.route("/ml", methods=['POST'])
-def ml():
-    attri = request.get_json()
-
-    print(attri)
-
-    return 'DONE', 201
 
 
 if __name__ == '__main__':
