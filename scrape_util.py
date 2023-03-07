@@ -1,5 +1,7 @@
+from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium import webdriver
 
 
 def scrape_amazon_product_from_rows(url, row):
@@ -125,7 +127,7 @@ def scrape_alibaba_supplier_from_rows(row, driver):
     if supplier_row is None:
         supplier_data = scrape_sub_column(supplier_col)
     else:
-        supplier_data = scrape_sub_row(supplier_row, driver)
+        supplier_data = scrape_sub_row(row, driver)
 
     # add the verified status to the supplier data
     supplier_data["isVerified"] = isVerified
@@ -190,7 +192,7 @@ def scrape_sub_column(row):
     }
 
 
-def scrape_sub_row(row, driver):
+def scrape_sub_row(row: BeautifulSoup, driver: webdriver.Chrome):
     # supplier level
     supplier_level = row.find(
         'a', {"class": "seller-start-level gallery-offer-seller-tag"})
@@ -214,13 +216,24 @@ def scrape_sub_row(row, driver):
         "title"]
 
     # supplier rating
-    supplier_rating = row.find(
+    supplier_rating = ""
+    supplier_div = row.find(
         'span', {"class": "seb-supplier-review-gallery-test__score"})
-    supplier_rating = "" if supplier_rating is None else supplier_rating.span.text.strip(
-    )
+    if supplier_div is not None:
+        supplier_rating = supplier_div.span.text
 
-    # supplier name from a tag
-    supplier_popup = driver.find_element(By.CLASS_NAME, "tag-country-right")
+    # This code below is to hover over the supplier country to get the popup with supplier name and link
+    supplier_popup = ""
+    try:
+        supplier_popup = row.find('span', {"class": "tag-country-right"})
+        # convert this supplier_popup to a webdriver element
+        print(supplier_popup.text)
+        supplier_popup = driver.find_element(
+            By.XPATH,
+            f"//*[@id='root']//*[contains(@class, '{supplier_popup['class'][0]}')]"
+        )
+    except:
+        print("Error finding supplier popup")
 
     # craete action chain object using webdriver to hover over the element
     action = ActionChains(driver)
