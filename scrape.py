@@ -15,7 +15,7 @@ def intial_config():
     user_agent = ua.random
 
     options = Options()
-    #options.add_argument("--headless")
+    options.add_argument("--headless")
     options.add_argument(f'user-agent={user_agent})')
     # add incognito mode to options
     options.add_argument("--incognito")
@@ -94,26 +94,18 @@ def find_suppliers_list(input_term):
         '//*[@id="J_SC_header"]/header/div[3]/div/div/div[2]/div/div[1]/div/button'
     ).click()
 
-    soup = BeautifulSoup(driver.page_source, "html.parser")
+    output = driver.find_element(By.CSS_SELECTOR,
+                                 ".organic-list.app-organic-search__list")
 
-    output = soup.find('div',
-                       {'class': 'organic-list app-organic-search__list'})
-
-    # In the has_classes function, tag is a parameter that represents an element in the HTML document. When you pass this function to the find_all method of a BeautifulSoup object, it will call this function for each element in the document and pass the element as an argument to the function.
-    def has_classes(tag):
-        classes = tag.get('class', [])
-        classes = [] if classes is None else classes
-        #The function will then return True if the element matches the criteria and False if it doesn’t. The find_all method will then return a list of elements that match the criteria.
-        return 'J-offer-wrapper' in classes and 'traffic-product-card' in classes
-
-    output2 = output.find_all(has_classes)
+    output2 = output.find_elements(By.CSS_SELECTOR,
+                                   ".J-offer-wrapper.traffic-product-card")
 
     scraped_items = []
 
     # this i will generate a unique id for each product
     i = 0
+    output2 = output2[:min(15, len(output2))]
     for row in output2:
-
         supplier_info = scrape_alibaba_supplier_from_rows(row, driver)
         if len(supplier_info) == 0 or len(supplier_info) < 2:
             continue
@@ -126,3 +118,12 @@ def find_suppliers_list(input_term):
     driver.quit()
 
     return {"item_count": len(scraped_items), "results": scraped_items}
+
+
+def find_suppliers_details(url):
+    driver = intial_config()
+    driver.get(url)
+
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+
+    return ""

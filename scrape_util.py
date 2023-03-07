@@ -58,13 +58,14 @@ def scrape_amazon_categories_from_rows(soup):
     return categories
 
 
-def scrape_alibaba_product_from_rows(row):
+def scrape_alibaba_product_from_rows(driver_row):
+    soup = BeautifulSoup(driver_row.get_attribute("outerHTML"), 'html.parser')
     # find the image
-    img_div = row.find('div', {"class": "seb-img-switcher__imgs"})
+    img_div = soup.find('div', {"class": "seb-img-switcher__imgs"})
     img_div = "" if img_div is None else img_div['data-image']
 
     # find the title
-    title = row.find('h2', {"class": "elements-title-normal__outter"})
+    title = soup.find('h2', {"class": "elements-title-normal__outter"})
     title_text = "" if title is None else title["title"]
 
     #find the link
@@ -72,18 +73,18 @@ def scrape_alibaba_product_from_rows(row):
     link = "" if link is None else link['href']
 
     # find the price range
-    price_range = row.find('span',
-                           {"class": "elements-offer-price-normal__price"})
+    price_range = soup.find('span',
+                            {"class": "elements-offer-price-normal__price"})
     price_range = "" if price_range is None else price_range.text
 
     #find the min order quantity
-    min_order = row.find('span',
-                         {"class": "element-offer-minorder-normal__value"})
+    min_order = soup.find('span',
+                          {"class": "element-offer-minorder-normal__value"})
     min_order = "" if min_order is None else min_order.text
 
     #find other properties
     extras = {}
-    details = row.find_all(
+    details = soup.find_all(
         'p', {"class": "organic-list-offer-center__property-item"})
     details = [] if details is None else details
     for item in details:
@@ -103,10 +104,15 @@ def scrape_alibaba_product_from_rows(row):
     }
 
 
-def scrape_alibaba_supplier_from_rows(row, driver):
+def scrape_alibaba_supplier_from_rows(item_row, driver: webdriver.Chrome):
+
+    soup = BeautifulSoup(item_row.get_attribute("outerHTML"), 'html.parser')
+    # write soup to file
+    with open("soup.html", "a") as file:
+        file.write(str(soup))
 
     # check if supplier is verified
-    isVerified = row.find(
+    isVerified = soup.find(
         'i', {
             "class":
             "icbu-certificate-icon icbu-certificate-icon-verified supplier-tag-verified"
@@ -117,17 +123,17 @@ def scrape_alibaba_supplier_from_rows(row, driver):
         return {}
 
     # check if the supplier data is present in row format
-    supplier_row = row.find('div',
-                            {"class": "list-no-v2-decisionsup__row flex-row"})
+    supplier_row = soup.find('div',
+                             {"class": "list-no-v2-decisionsup__row flex-row"})
     # check if the supplier data is present in column format
-    supplier_col = row.find('div',
-                            {"class": "organic-list-offer-right type-simple"})
+    supplier_col = soup.find('div',
+                             {"class": "organic-list-offer-right type-simple"})
     supplier_data = {}
     # if row is None, then supplier data is in column format so scrape the column data as both have different classes and structure
     if supplier_row is None:
         supplier_data = scrape_sub_column(supplier_col)
     else:
-        supplier_data = scrape_sub_row(row, driver)
+        supplier_data = scrape_sub_row(soup, item_row, driver)
 
     # add the verified status to the supplier data
     supplier_data["isVerified"] = isVerified
@@ -192,9 +198,9 @@ def scrape_sub_column(row):
     }
 
 
-def scrape_sub_row(row: BeautifulSoup, driver: webdriver.Chrome):
+def scrape_sub_row(soup: BeautifulSoup, item_row, driver):
     # supplier level
-    supplier_level = row.find(
+    supplier_level = soup.find(
         'a', {"class": "seller-start-level gallery-offer-seller-tag"})
 
     diamonds = supplier_level.find_all('i')
@@ -205,19 +211,19 @@ def scrape_sub_row(row: BeautifulSoup, driver: webdriver.Chrome):
         return {}
 
     # supplier experience
-    supplier_experience = row.find(
+    supplier_experience = soup.find(
         "span", {"class": "seller-tag__year flex-no-shrink"})
     supplier_experience = "" if supplier_experience is None else supplier_experience.text
 
     # supplier country
-    supplier_country = row.find(
+    supplier_country = soup.find(
         'span', {"class": "seller-tag__country flex-no-shrink"})
     supplier_country = "" if supplier_country is None else supplier_country[
         "title"]
 
     # supplier rating
     supplier_rating = ""
-    supplier_div = row.find(
+    supplier_div = soup.find(
         'span', {"class": "seb-supplier-review-gallery-test__score"})
     if supplier_div is not None:
         supplier_rating = supplier_div.span.text
@@ -225,13 +231,10 @@ def scrape_sub_row(row: BeautifulSoup, driver: webdriver.Chrome):
     # This code below is to hover over the supplier country to get the popup with supplier name and link
     supplier_popup = ""
     try:
-        supplier_popup = row.find('span', {"class": "tag-country-right"})
+        supplier_popup = item_row.find_element(By.CLASS_NAME,
+                                               "tag-country-right")
         # convert this supplier_popup to a webdriver element
         print(supplier_popup.text)
-        supplier_popup = driver.find_element(
-            By.XPATH,
-            f"//*[@id='root']//*[contains(@class, '{supplier_popup['class'][0]}')]"
-        )
     except:
         print("Error finding supplier popup")
 
