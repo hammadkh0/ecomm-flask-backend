@@ -14,7 +14,6 @@ def get_products():
     request_data = request.get_json()
     url = request_data['url']
     input_term = request_data['input_term']
-    products_data = {}
     try:
         products_data = product_list_request(url, input_term)
         response = app.response_class(response=json.dumps(products_data),
@@ -36,17 +35,21 @@ def get_products():
 def get_single_product(asin):
     request_data = request.get_json()
     url = request_data['link']
-    asin = request_data['asin']
 
     try:
-        specific_product_request()
-    except Exception as e:
-        print(e)
-        pass
+        details = specific_product_request(url)
 
-    return '''
-        The product is {}.
-    '''.format(asin)
+        return app.response_class(response=json.dumps(details),
+                                  status=200,
+                                  mimetype='application/json')
+    except Exception as e:
+        response = app.response_class(response=json.dumps({
+            "ERROR": str(e),
+            "status": 500
+        }),
+                                      status=500,
+                                      mimetype='application/json')
+        return response
 
 
 @app.route("/ecomm/suppliers", methods=['POST'])

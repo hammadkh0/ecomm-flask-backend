@@ -78,6 +78,87 @@ def find_product_list(url, user_input):
     return {"products": scraped_items, "item_count": total_items}
 
 
+def find_product_details(url):
+    driver = intial_config()
+
+    driver.get(url)
+
+    # convert the page to beautiful soup
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+
+    # find the product title
+    title = soup.find(id="productTitle").get_text().strip()
+
+    # find the product rating
+    rating = soup.find('span', {'class': 'a-icon-alt'})
+    rating = "" if rating is None else rating.text.split(" ")[0]
+
+    # find the product rating count
+    rating_count = soup.find('span', {'id': 'acrCustomerReviewText'})
+    rating_count = "" if rating_count is None else rating_count.text.split(
+        " ")[0]
+
+    # find the product price
+    price = soup.find('span', {'class': 'a-offscreen'})
+    price = "" if price is None else price.text
+
+    # find the product images
+    altImages = soup.find(id="altImages")
+    img_list = altImages.find_all(
+        "li", {"data-csa-c-action": "image-block-alt-image-hover"})
+    img_list = [] if img_list is None else img_list
+
+    images = []
+    for img in img_list:
+        img = img.find("img")
+        img = "" if img is None else img["src"]
+        images.append(img)
+
+    # get style of product
+    style = soup.find('div', {'class': 'variation_style_name'})
+    style = "" if style is None else style.text
+
+    # get attributes of product
+    attibutes_table = soup.find(id="productDetails_detailBullets_sections1")
+    attibutes_table = "" if attibutes_table is None else attibutes_table
+    attributes = attibutes_table.find_all('tr')
+    attributes = [] if attributes is None else attributes
+    attb = []
+    for element in attributes:
+        name = element.find(
+            'th',
+            {'class': 'a-color-secondary a-size-base prodDetSectionEntry'})
+        name = "" if name is None else name.text.strip()
+        value = element.find('td', {'class': 'a-size-base prodDetAttrValue'})
+        value = "" if value is None else value.get_text(strip=True)
+        data = {"name": name, "value": value}
+        attb.append(data)
+
+    # get featured bullets of product
+    featured_list = soup.find(
+        'ul', {'class': 'a-unordered-list a-vertical a-spacing-mini'})
+
+    fl_items = featured_list.find_all('span', {'class': 'a-list-item'})
+    fl_items = [] if fl_items is None else fl_items
+    fl = []
+    for element in fl_items:
+        fl.append(element.text.strip())
+
+    driver.quit()
+    return {
+        "product": {
+            "title": title,
+            "rating": rating,
+            "rating_count": rating_count,
+            "price": price,
+            "images": images,
+            "style": style,
+            "attributes": attb,
+            "featured_bullets": fl
+        }
+    }
+
+
 def find_suppliers_list(input_term):
     driver = intial_config()
 

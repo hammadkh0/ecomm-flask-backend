@@ -1,4 +1,4 @@
-from scrape import find_product_list
+from scrape import find_product_list, find_product_details
 import time
 import random
 from email.header import Header
@@ -28,7 +28,7 @@ def product_list_request(url, user_input):
             return data
 
 
-def specific_product_request():
+def specific_product_request(url):
     with TorRequests() as tor_requests:
         with tor_requests.get_session() as sess:
 
@@ -39,3 +39,5 @@ def specific_product_request():
             #time.sleep(random.randint(1, 3))
 
             # -- your scraping code here ..
+            data = find_product_details(url)
+            return data
