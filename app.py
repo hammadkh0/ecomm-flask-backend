@@ -2,7 +2,7 @@ from flask import Flask, request, json
 from flask_cors import CORS
 from sentiment import get_sentiments
 from send_requests import product_list_request, specific_product_request
-from scrape import find_suppliers_list
+from scrape import find_suppliers_list, find_suppliers_details
 
 # create the Flask app
 app = Flask(__name__)
@@ -62,6 +62,27 @@ def get_suppliers():
                                       mimetype='application/json')
         return response
 
+    except Exception as e:
+        print(e)
+        response = app.response_class(response=json.dumps({
+            "error": str(e),
+            "status": 500
+        }),
+                                      status=500,
+                                      mimetype='application/json')
+        return response
+
+
+@app.route('/ecomm/suppliers/details', methods=['POST'])
+def get_supplier_details():
+    request_data = request.get_json()
+
+    url = request_data['url']
+    try:
+        supplier_details = find_suppliers_details(url)
+        return app.response_class(response=json.dumps(supplier_details),
+                                  status=200,
+                                  mimetype='application/json')
     except Exception as e:
         print(e)
         response = app.response_class(response=json.dumps({
