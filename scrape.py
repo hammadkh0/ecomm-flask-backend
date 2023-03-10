@@ -91,12 +91,11 @@ def find_product_details(url):
 
     # find the product rating
     rating = soup.find('span', {'class': 'a-icon-alt'})
-    rating = "" if rating is None else rating.text.split(" ")[0]
+    rating = "" if rating is None else rating.text
 
     # find the product rating count
     rating_count = soup.find('span', {'id': 'acrCustomerReviewText'})
-    rating_count = "" if rating_count is None else rating_count.text.split(
-        " ")[0]
+    rating_count = "" if rating_count is None else rating_count.text
 
     # find the product price
     price = soup.find('span', {'class': 'a-offscreen'})
@@ -124,13 +123,30 @@ def find_product_details(url):
     attributes = attibutes_table.find_all('tr')
     attributes = [] if attributes is None else attributes
     attb = []
+    value = ""
+
+    # find all the attributes inside the table. Both the attributes name and the values are like name-value pairs
     for element in attributes:
         name = element.find(
             'th',
             {'class': 'a-color-secondary a-size-base prodDetSectionEntry'})
         name = "" if name is None else name.text.strip()
-        value = element.find('td', {'class': 'a-size-base prodDetAttrValue'})
-        value = "" if value is None else value.get_text(strip=True)
+
+        # Customer Reviews and Best Sellers Rank are created differently so they are handled separately
+        if name != "Customer Reviews" and name != "Best Sellers Rank":
+            value = element.find('td',
+                                 {'class': 'a-size-base prodDetAttrValue'})
+            value = "" if value is None else value.get_text(strip=True)
+
+        elif name == "Best Sellers Rank":
+            value = element.select('td span span')
+            value = [val.text.strip() for val in value]
+            value = " ".join(value)
+
+        else:
+            # just reusing the above variables to save memory and execution time
+            value = rating_count + " " + rating
+
         data = {"name": name, "value": value}
         attb.append(data)
 
@@ -144,6 +160,14 @@ def find_product_details(url):
     for element in fl_items:
         fl.append(element.text.strip())
 
+    # get the description of the product
+    description = soup.find(id="productDescription")
+    description2 = description.find('p').span
+    if (description2 is None):
+        description2 = description.find_all('p')[1].span
+
+    description_txt = "" if description2 is None else description2.text.strip()
+
     driver.quit()
     return {
         "product": {
@@ -154,7 +178,8 @@ def find_product_details(url):
             "images": images,
             "style": style,
             "attributes": attb,
-            "featured_bullets": fl
+            "featured_bullets": fl,
+            "description": description_txt
         }
     }
 
