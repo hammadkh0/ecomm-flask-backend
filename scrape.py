@@ -17,6 +17,7 @@ def intial_config():
     options = Options()
     options.add_argument("--headless")
     options.add_argument(f'user-agent={user_agent})')
+    options.add_argument("--window-size=1366,768")
     # add incognito mode to options
     options.add_argument("--incognito")
 
@@ -102,16 +103,19 @@ def find_product_details(url):
     price = "" if price is None else price.text
 
     # find the product images
-    altImages = soup.find(id="altImages")
-    img_list = altImages.find_all(
-        "li", {"data-csa-c-action": "image-block-alt-image-hover"})
-    img_list = [] if img_list is None else img_list
+    # altImages = soup.find(id="altImages")
+    # img_list = altImages.find_all(
+    #     "li", {"data-csa-c-action": "image-block-alt-image-hover"})
+    # img_list = [] if img_list is None else img_list
 
     images = []
-    for img in img_list:
-        img = img.find("img")
-        img = "" if img is None else img["src"]
-        images.append(img)
+    # for img in img_list:
+    #     img = img.find("img")
+    #     img = "" if img is None else img["src"]
+    #     images.append(img)
+    img = soup.find(id="landingImage")
+    img = "" if img is None else img
+    images.append(img["src"])
 
     # get style of product
     style = soup.find('div', {'class': 'variation_style_name'})

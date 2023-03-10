@@ -9,26 +9,37 @@ app = Flask(__name__)
 CORS(app)
 
 
-@app.route('/ecomm/products', methods=['POST'])
+@app.route('/ecomm/products', methods=['POST', 'OPTIONS'])
 def get_products():
-    request_data = request.get_json()
-    url = request_data['url']
-    input_term = request_data['input_term']
-    try:
-        products_data = product_list_request(url, input_term)
-        response = app.response_class(response=json.dumps(products_data),
-                                      status=200,
-                                      mimetype='application/json')
-        return response
-    except Exception as e:
-        print(e)
-        response = app.response_class(response=json.dumps({
-            "ERROR": str(e),
-            "status": 500
-        }),
-                                      status=500,
-                                      mimetype='application/json')
-        return response
+    if request.method == 'OPTIONS':
+        headers = {
+            'Access-Control-Allow-Origin':
+            '*',
+            'Access-Control-Allow-Methods':
+            'POST',
+            'Access-Control-Allow-Headers':
+            'Content-Type, Authorization, Access-Control-Allow-Origin'
+        }
+        return ('', 204, headers)
+    else:
+        request_data = request.get_json()
+        url = request_data['url']
+        input_term = request_data['input_term']
+        try:
+            products_data = product_list_request(url, input_term)
+            response = app.response_class(response=json.dumps(products_data),
+                                          status=200,
+                                          mimetype='application/json')
+            return response
+        except Exception as e:
+            print(e)
+            response = app.response_class(response=json.dumps({
+                "ERROR": str(e),
+                "status": 500
+            }),
+                                          status=500,
+                                          mimetype='application/json')
+            return response
 
 
 @app.route('/ecomm/products/<asin>', methods=['POST'])
