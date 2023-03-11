@@ -44,44 +44,66 @@ def get_products():
 
 @app.route('/ecomm/products/<asin>/reviews', methods=['POST'])
 def get_reviews(asin):
-    request_data = request.get_json()
-    url = request_data['reviews_link']
+    if request.method == 'OPTIONS':
+        headers = {
+            'Access-Control-Allow-Origin':
+            '*',
+            'Access-Control-Allow-Methods':
+            'POST',
+            'Access-Control-Allow-Headers':
+            'Content-Type, Authorization, Access-Control-Allow-Origin'
+        }
+        return ('', 204, headers)
+    else:
+        request_data = request.get_json()
+        url = request_data['reviews_link']
 
-    try:
-        reviews = product_reviews_request(url)
+        try:
+            reviews = product_reviews_request(url)
 
-        return app.response_class(response=json.dumps(reviews),
-                                  status=200,
-                                  mimetype='application/json')
-    except Exception as e:
-        response = app.response_class(response=json.dumps({
-            "ERROR": str(e),
-            "status": 500
-        }),
-                                      status=500,
+            return app.response_class(response=json.dumps(reviews),
+                                      status=200,
                                       mimetype='application/json')
-        return response
+        except Exception as e:
+            response = app.response_class(response=json.dumps({
+                "ERROR": str(e),
+                "status": 500
+            }),
+                                          status=500,
+                                          mimetype='application/json')
+            return response
 
 
 @app.route('/ecomm/products/<asin>', methods=['POST'])
 def get_single_product(asin):
-    request_data = request.get_json()
-    url = request_data['link']
+    if request.method == 'OPTIONS':
+        headers = {
+            'Access-Control-Allow-Origin':
+            '*',
+            'Access-Control-Allow-Methods':
+            'POST',
+            'Access-Control-Allow-Headers':
+            'Content-Type, Authorization, Access-Control-Allow-Origin'
+        }
+        return ('', 204, headers)
+    else:
+        request_data = request.get_json()
+        url = request_data['link']
 
-    try:
-        details = specific_product_request(url)
+        try:
+            details = specific_product_request(url)
 
-        return app.response_class(response=json.dumps(details),
-                                  status=200,
-                                  mimetype='application/json')
-    except Exception as e:
-        response = app.response_class(response=json.dumps({
-            "ERROR": str(e),
-            "status": 500
-        }),
-                                      status=500,
+            return app.response_class(response=json.dumps(details),
+                                      status=200,
                                       mimetype='application/json')
-        return response
+        except Exception as e:
+            response = app.response_class(response=json.dumps({
+                "ERROR": str(e),
+                "status": 500
+            }),
+                                          status=500,
+                                          mimetype='application/json')
+            return response
 
 
 @app.route("/ecomm/suppliers", methods=['POST'])
