@@ -17,7 +17,6 @@ def intial_config():
     options = Options()
     options.add_argument("--headless")
     options.add_argument(f'user-agent={user_agent})')
-    options.add_argument("--window-size=1366,768")
     # add incognito mode to options
     options.add_argument("--incognito")
 
@@ -27,8 +26,8 @@ def intial_config():
     print(options.arguments)
     print("----------------------------------------")
 
-    # simulate headless mode by minimizing the window
     driver.set_window_size(1366, 768)
+    # simulate headless mode by minimizing the window
     #driver.set_window_position(-2000, 0)
     return driver
 
@@ -150,6 +149,10 @@ def find_product_details(url):
 
     description_txt = "" if description2 is None else description2.text.strip()
 
+    # get the reviews link of the product
+    reviews_link = soup.find('a', {'data-hook': 'see-all-reviews-link-foot'})
+    reviews_link = "" if reviews_link is None else "amazon.com" + reviews_link[
+        "href"]
     driver.quit()
     return {
         "product": {
@@ -161,9 +164,43 @@ def find_product_details(url):
             "style": style,
             "attributes": attb,
             "featured_bullets": fl,
-            "description": description_txt
+            "description": description_txt,
+            "reviews_link": reviews_link
         }
     }
+
+
+def find_product_reviews(url):
+    driver = intial_config()
+
+    driver.get("https://" + url)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+
+    review_div = soup.find(id="cm_cr-review_list")
+    raw_reviews = review_div.find_all('div', {'data-hook': 'review'})
+
+    reviews = []
+    for raw_item in raw_reviews:
+        author = raw_item.find('span', {'class': 'a-profile-name'})
+        author = "" if author is None else author.text
+
+        rating = raw_item.find('i', {'data-hook': 'review-star-rating'})
+        rating = "" if rating is None else rating.span.text.split(" ")[0]
+
+        title = raw_item.find('a', {'data-hook': 'review-title'})
+        title = "" if title is None else title.text.strip()
+
+        body = raw_item.find('span', {'data-hook': 'review-body'})
+        body = "" if body is None else body.text.strip()
+
+        reviews.append({
+            "author": author,
+            "rating": rating,
+            "title": title,
+            "body": body
+        })
+
+    return {"reviews": reviews, "item_count": len(reviews)}
 
 
 def find_suppliers_list(input_term):

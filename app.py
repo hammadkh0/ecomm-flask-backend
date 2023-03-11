@@ -1,7 +1,7 @@
 from flask import Flask, request, json
 from flask_cors import CORS
 from sentiment import get_sentiments
-from send_requests import product_list_request, specific_product_request
+from send_requests import product_list_request, specific_product_request, product_reviews_request
 from scrape import find_suppliers_list, find_suppliers_details
 
 # create the Flask app
@@ -40,6 +40,27 @@ def get_products():
                                           status=500,
                                           mimetype='application/json')
             return response
+
+
+@app.route('/ecomm/products/<asin>/reviews', methods=['POST'])
+def get_reviews(asin):
+    request_data = request.get_json()
+    url = request_data['reviews_link']
+
+    try:
+        reviews = product_reviews_request(url)
+
+        return app.response_class(response=json.dumps(reviews),
+                                  status=200,
+                                  mimetype='application/json')
+    except Exception as e:
+        response = app.response_class(response=json.dumps({
+            "ERROR": str(e),
+            "status": 500
+        }),
+                                      status=500,
+                                      mimetype='application/json')
+        return response
 
 
 @app.route('/ecomm/products/<asin>', methods=['POST'])
