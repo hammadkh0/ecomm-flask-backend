@@ -4,6 +4,40 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 
 
+def find_attributes(soup, element, rating_count, rating, table_id):
+    attb = []
+    # find the table with the the id
+    attibutes_table = soup.find(id=table_id)
+    if attibutes_table is not None:
+        # find all the rows in the table
+        attributes = attibutes_table.find_all('tr')
+        attributes = [] if attributes is None else attributes
+        value = ""
+        for element in attributes:
+            name = element.find(
+                'th',
+                {'class': 'a-color-secondary a-size-base prodDetSectionEntry'})
+            name = "" if name is None else name.text.strip()
+
+            # Customer Reviews and Best Sellers Rank are created differently so they are handled separately
+            if name != "Customer Reviews" and name != "Best Sellers Rank":
+                value = element.find('td',
+                                     {'class': 'a-size-base prodDetAttrValue'})
+                value = "" if value is None else value.get_text(strip=True)
+
+            elif name == "Best Sellers Rank":
+                value = element.select('td span span')
+                value = [val.text.strip() for val in value]
+                value = " ".join(value)
+
+            else:
+                # just reusing the above variables to save memory and execution time
+                value = rating_count + " " + rating
+
+            attb.append({"name": name, "value": value})
+        return attb
+
+
 def scrape_amazon_product_from_rows(url, row):
     asin = row['data-asin']
 

@@ -6,7 +6,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
-from scrape_util import scrape_amazon_product_from_rows, scrape_amazon_categories_from_rows, scrape_alibaba_product_from_rows, scrape_alibaba_supplier_from_rows
+from scrape_util import scrape_amazon_product_from_rows, scrape_amazon_categories_from_rows, scrape_alibaba_product_from_rows, scrape_alibaba_supplier_from_rows, find_attributes
 
 
 def intial_config():
@@ -121,38 +121,16 @@ def find_product_details(url):
     style = soup.find('div', {'class': 'variation_style_name'})
     style = "" if style is None else style.text
 
-    # get attributes of product
-    attibutes_table = soup.find(id="productDetails_detailBullets_sections1")
-    attibutes_table = "" if attibutes_table is None else attibutes_table
-    attributes = attibutes_table.find_all('tr')
-    attributes = [] if attributes is None else attributes
+    # get attributes of product from different available tables. If more tables are found they can be addded to the list
     attb = []
-    value = ""
 
-    # find all the attributes inside the table. Both the attributes name and the values are like name-value pairs
-    for element in attributes:
-        name = element.find(
-            'th',
-            {'class': 'a-color-secondary a-size-base prodDetSectionEntry'})
-        name = "" if name is None else name.text.strip()
-
-        # Customer Reviews and Best Sellers Rank are created differently so they are handled separately
-        if name != "Customer Reviews" and name != "Best Sellers Rank":
-            value = element.find('td',
-                                 {'class': 'a-size-base prodDetAttrValue'})
-            value = "" if value is None else value.get_text(strip=True)
-
-        elif name == "Best Sellers Rank":
-            value = element.select('td span span')
-            value = [val.text.strip() for val in value]
-            value = " ".join(value)
-
-        else:
-            # just reusing the above variables to save memory and execution time
-            value = rating_count + " " + rating
-
-        data = {"name": name, "value": value}
-        attb.append(data)
+    for id in [
+            "productDetails_detailBullets_sections1",
+            "productDetails_techSpec_section_1",
+            "productDetails_techSpec_section_2"
+    ]:
+        list = find_attributes(soup, attb, rating_count, rating, id)
+        attb = [*attb, *list]
 
     # get featured bullets of product
     featured_list = soup.find(
