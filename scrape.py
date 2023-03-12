@@ -1,3 +1,4 @@
+import time
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from selenium import webdriver
@@ -15,7 +16,7 @@ def intial_config():
     user_agent = ua.random
 
     options = Options()
-    options.add_argument("--headless")
+    #options.add_argument("--headless")
     options.add_argument(f'user-agent={user_agent})')
     # add incognito mode to options
     options.add_argument("--incognito")
@@ -247,11 +248,157 @@ def find_suppliers_list(input_term):
 
 def find_suppliers_details(url):
     driver = intial_config()
-    driver.get(url)
+    driver.get("https:" + url)
 
-    soup = BeautifulSoup(driver.page_source, "html.parser")
+    L = driver.find_elements(By.CSS_SELECTOR,
+                             "li.detail-next-tabs-tab.details-tab-pane")
+    for i in L:
+        if i.text == "Company profile":
+            i.click()
+            break
 
-    return ""
+    # wait untill the company profile tab is loaded
+    time.sleep(2.5)
+
+    company_1 = driver.find_element(By.ID, "block-tab-company")
+    company = BeautifulSoup(company_1.get_attribute('innerHTML'),
+                            "html.parser")
+
+    overview = company.find('div', {'class': 'block-bottom'})
+    overview = "" if overview is None else overview
+    ow = []
+    overview_rows = overview.find_all('tr')
+    if overview_rows is not None:
+        for row in overview_rows:
+            tds = row.find_all('td')
+            key = tds[0].text.strip()
+            value = tds[1].find('div', {'class': 'content-value'})
+            value = "" if value is None else value.text.strip()
+
+            ow.append({"key": key, "value": value})
+            key = tds[2].text.strip()
+            value = tds[3].find('div', {'class': 'content-value'})
+            if value is None:
+                value = tds[3].find('a', {'class': 'content-value'})
+            value = "" if value is None else value.text.strip()
+            ow.append({"key": key, "value": value})
+
+    print("ow done")
+    prod_capacity = company.find(
+        'div', {'module-name': 'icbu-pc-cpProductionCapacity'})
+    prod_tables = prod_capacity.find_all('div',
+                                         {'class': 'infoList-mod-field'})
+    pc = []
+
+    for i, infos in enumerate(prod_tables):
+        if i == 0:
+            continue
+        elif i == 1:
+            table_body = infos.find('div', {'class': 'next-table-body'})
+            table = table_body.find('table')
+            tds = table.find_all('td')
+
+            name = tds[0].text.strip()
+            no = tds[1].text.strip()
+            quantity = tds[2].text.strip()
+            verified = tds[3].text.strip()
+
+            pc.append({
+                "production_equipment": {
+                    "name": name,
+                    "NO": no,
+                    "quantity": quantity,
+                    "verified": verified
+                }
+            })
+        elif i == 2:
+            sub_tbl = []
+            table = infos.find('table', {'class': 'icbu-shop-table-col'})
+            trs = table.find_all('tr')
+            for tr in trs:
+                tds = tr.find_all('td')
+
+                key = tds[0].text.strip()
+                value = tds[1].text.strip()
+                sub_tbl.append({"key": key, "value": value})
+
+            pc.append({"factory_information": sub_tbl})
+
+        elif i == 3:
+            table_body = infos.find('div', {'class': 'next-table-body'})
+            table = table_body.find('table')
+            tds = table.find_all('td')
+
+            name = tds[0].text.strip()
+            line_capac = tds[1].text.strip()
+            units_produced = tds[2].text.strip()
+            verified = tds[3].text.strip()
+
+            pc.append({
+                "annual_prod_capacity": {
+                    "name": name,
+                    "line_capacity": line_capac,
+                    "units_produced": units_produced,
+                    "verified": verified
+                }
+            })
+
+    print("pc done")
+    quality_control = company.find(
+        'div', {'module-name': 'icbu-pc-cpQualityControlCapacity'})
+    qc = []
+    if quality_control is not None:
+        qc_table = quality_control.find('div', {
+            'class': 'next-table-body'
+        }).table
+        trs = qc_table.find_all('tr')
+        if trs is not None:
+            for tr in trs:
+                tds = tr.find_all('td')
+                if tds is not None:
+                    key = tds[0].text.strip()
+                    value = tds[1].text.strip()
+                    qc.append({"key": key, "value": value})
+
+    print("qc done")
+
+    rnd_capacity = company.find('div', {'module-name': 'icbu-pc-cpRDCapacity'})
+    rnd = []
+    if rnd_capacity is not None:
+        rnd_table = rnd_capacity.find('div', {
+            'class': 'next-table-body'
+        }).table
+        tr = rnd_table.find('tr')
+        tds = tr.find_all('td')
+
+        img = tds[0].find('img')
+        img = "" if img is None else img['src']
+
+        trademark_no = tds[1].text.strip()
+        trademark_name = tds[2].text.strip()
+        trademark_catg = tds[3].text.strip()
+        trademark_date = tds[4].text.strip()
+        verified = tds[5].text.strip()
+
+        rnd.append({
+            "trademark": {
+                "img": img,
+                "trademark_number": trademark_no,
+                "trademark_name": trademark_name,
+                "trademark_category": trademark_catg,
+                "available_date": trademark_date,
+                "verified": verified
+            }
+        })
+
+    driver.quit()
+
+    return {
+        "overview": ow,
+        "production_capacity": pc,
+        "quality_control": qc,
+        "rnd_capacity": rnd
+    }
 
 
 def find_supplier_prodcut_details(url):
