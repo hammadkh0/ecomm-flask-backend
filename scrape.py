@@ -252,3 +252,95 @@ def find_suppliers_details(url):
     soup = BeautifulSoup(driver.page_source, "html.parser")
 
     return ""
+
+
+def find_supplier_prodcut_details(url):
+
+    driver = intial_config()
+
+    driver.get("https:" + url)
+
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+
+    # get the title of the product
+    title = soup.find('div', {'class': 'product-title'})
+    title = "" if title is None else title.text.strip()
+
+    # get price list of the product
+    price_list = soup.find('div', {'class': 'price-list'})
+    price_list = "" if price_list is None else price_list
+    price_list = price_list.find_all('div', {'class': 'price-item'})
+    prices = []
+    if price_list is not None:
+        for price_item in price_list:
+            quality = price_item.find('div', {'class': 'quality'})
+            quality = "" if quality is None else quality.text.strip()
+            price = price_item.find('div', {'class': 'price'})
+            price = "" if price is None else price.text.strip()
+
+            prices.append({"quality": quality, "price": price})
+
+    # find lead time
+    lead_list = soup.find('div', {'class': 'lead-list'})
+    lead_list = "" if lead_list is None else lead_list.table
+    lead_time = []
+    if lead_list is not None:
+        lead_list = lead_list.find_all('tr')
+        r1 = lead_list[0].find_all('td')
+        r2 = lead_list[1].find_all('td')
+
+        for i in range(1, len(r1)):
+            quantity = r1[i].text.strip()
+            price = r2[i].text.strip()
+
+            lead_time.append({"quantity": quantity, "price": price})
+
+    # find essential information
+    essential_info = soup.find('div', {'data-e2e-name': 'quickDetail'})
+    el = []
+    if essential_info is not None:
+        entry_list = essential_info.find('div', {'class': 'do-entry-list'})
+        entry_list = entry_list.find_all('dl', {'class': 'do-entry-item'})
+        for element in entry_list:
+            key = element.find('span', {'class': 'attr-name J-attr-name'})
+            key = "" if key is None else key["title"].strip()
+
+            value = element.find('div', {'class': 'text-ellipsis'})
+            value = "" if value is None else value["title"].strip()
+            el.append({"key": key, "value": value})
+
+    supply_ability = soup.find('div', {'data-e2e-name': 'supplyAbility'})
+    sa = []
+    if supply_ability is not None:
+        entry_list = supply_ability.find('div', {'class': 'do-entry-list'})
+        entry_list = entry_list.find_all('dl', {'class': 'do-entry-item'})
+        for element in entry_list:
+            key = element.find('dt')
+            key = "" if key is None else key["title"]
+
+            value = element.find('dd')
+            value = "" if value is None else value["title"]
+            sa.append({"key": key, "value": value})
+
+    package_ability = soup.find('div', {'data-e2e-name': 'productPackaging'})
+    pa = []
+    if package_ability is not None:
+        entry_list = package_ability.find('div', {'class': 'do-entry-list'})
+        entry_list = entry_list.find_all('dl', {'class': 'do-entry-item'})[:2]
+        for element in entry_list:
+            key = element.find('dt')
+            key = "" if key is None else key["title"].strip()
+
+            value = element.find('span')
+            value = "" if value is None else value.text.strip()
+            pa.append({"key": key, "value": value})
+
+    driver.quit()
+    return {
+        "title": title,
+        "prices": prices,
+        "lead_time": lead_time,
+        "essential_info": el,
+        "supply_ability": sa,
+        "package_delivery": pa
+    }
