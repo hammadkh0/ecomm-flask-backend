@@ -258,7 +258,7 @@ def find_suppliers_details(url):
             break
 
     # wait untill the company profile tab is loaded
-    time.sleep(2.5)
+    time.sleep(3)
 
     company_1 = driver.find_element(By.ID, "block-tab-company")
     company = BeautifulSoup(company_1.get_attribute('innerHTML'),
@@ -293,7 +293,20 @@ def find_suppliers_details(url):
     for i, infos in enumerate(prod_tables):
         if i == 0:
             continue
-        elif i == 1:
+        title = infos.find('div', {'class': 'title'}).text.strip()
+        if title == "COOPERATE FACTORY INFORMATION":
+            sub_tbl = []
+            table = infos.find('table')
+            trs = table.find_all('tr')
+            for tr in trs:
+                tds = tr.find_all('td')
+
+                key = tds[0].text.strip()
+                value = tds[1].text.strip()
+                sub_tbl.append({"key": key, "value": value})
+            pc.append({"cooperate_factory_information": sub_tbl})
+
+        elif title == "Production Equipment":
             table_body = infos.find('div', {'class': 'next-table-body'})
             table = table_body.find('table')
             tds = table.find_all('td')
@@ -311,7 +324,11 @@ def find_suppliers_details(url):
                     "verified": verified
                 }
             })
-        elif i == 2:
+        elif title == "Factory information":
+            driver.find_element(
+                By.XPATH,
+                '//*[@id="module_ali_site"]/div/div[2]/div/div/div/div[2]/div/div[2]/div'
+            ).click()
             sub_tbl = []
             table = infos.find('table', {'class': 'icbu-shop-table-col'})
             trs = table.find_all('tr')
@@ -324,7 +341,7 @@ def find_suppliers_details(url):
 
             pc.append({"factory_information": sub_tbl})
 
-        elif i == 3:
+        elif title == "Annual Production Capacity":
             table_body = infos.find('div', {'class': 'next-table-body'})
             table = table_body.find('table')
             tds = table.find_all('td')
@@ -360,44 +377,96 @@ def find_suppliers_details(url):
                     value = tds[1].text.strip()
                     qc.append({"key": key, "value": value})
 
-    print("qc done")
+        print("qc done")
 
     rnd_capacity = company.find('div', {'module-name': 'icbu-pc-cpRDCapacity'})
     rnd = []
     if rnd_capacity is not None:
-        rnd_table = rnd_capacity.find('div', {
-            'class': 'next-table-body'
-        }).table
-        tr = rnd_table.find('tr')
-        tds = tr.find_all('td')
+        rnd_table = rnd_capacity.find('div', {'class': 'next-table-body'})
+        if rnd_table is not None:
+            rnd_table = rnd_table.table
+            tr = rnd_table.find('tr')
+            tds = tr.find_all('td')
 
-        img = tds[0].find('img')
-        img = "" if img is None else img['src']
+            img = tds[0].find('img')
+            img = "" if img is None else img['src']
 
-        trademark_no = tds[1].text.strip()
-        trademark_name = tds[2].text.strip()
-        trademark_catg = tds[3].text.strip()
-        trademark_date = tds[4].text.strip()
-        verified = tds[5].text.strip()
+            trademark_no = tds[1].text.strip()
+            trademark_name = tds[2].text.strip()
+            trademark_catg = tds[3].text.strip()
+            trademark_date = tds[4].text.strip()
+            verified = tds[5].text.strip()
 
-        rnd.append({
-            "trademark": {
-                "img": img,
-                "trademark_number": trademark_no,
-                "trademark_name": trademark_name,
-                "trademark_category": trademark_catg,
-                "available_date": trademark_date,
-                "verified": verified
-            }
-        })
+            rnd.append({
+                "trademark": {
+                    "img": img,
+                    "trademark_number": trademark_no,
+                    "trademark_name": trademark_name,
+                    "trademark_category": trademark_catg,
+                    "available_date": trademark_date,
+                    "verified": verified
+                }
+            })
+        print("rnd done")
 
+    trade_capability = company.find(
+        'div', {'module-name': 'icbu-pc-cpTradeCapability'})
+    trade = []
+    if trade_capability is not None:
+        driver.find_element(
+            By.XPATH,
+            '//*[@id="module_ali_site"]/div/div[5]/div/div/div/div[2]/div/div[2]/div'
+        ).click()
+
+        trade_table = trade_capability.find_all(
+            'div', {'class': 'infoList-mod-field'})
+        for i, infos in enumerate(trade_table):
+            title = infos.find('div', {'class': 'title'}).text.strip()
+            if title == "Main Markets & Product(s)":
+                table_body = infos.find('div', {'class': 'next-table-body'})
+                table = table_body.find('table')
+
+                trs = table.find_all('tr')
+                main_market_info = []
+                for tr in trs:
+                    tds = tr.find_all('td')
+                    if tds is not None:
+                        main_market_info.append({
+                            "main_market":
+                            tds[0].text.strip(),
+                            "total_revenue":
+                            tds[1].text.strip(),
+                            "main_products":
+                            tds[2].text.strip(),
+                            "verified":
+                            tds[3].text.strip()
+                        })
+                trade.append({"main_market_info": main_market_info})
+            elif title == "Trade Ability" or title == "Business Terms":
+                table = infos.find('table')
+                trs = table.find_all('tr')
+                tt = []
+                if trs is not None:
+                    for tr in trs:
+                        tds = tr.find_all('td')
+                        if tds is not None:
+                            key = tds[0].text.strip()
+                            value = tds[1].text.strip()
+                            tt.append({"key": key, "value": value})
+                    if i == 1:
+                        trade.append({"trade_ability": tt})
+                    elif i == 2:
+                        trade.append({"business_terms": tt})
+
+        print("trade done")
     driver.quit()
 
     return {
         "overview": ow,
         "production_capacity": pc,
         "quality_control": qc,
-        "rnd_capacity": rnd
+        "rnd_capacity": rnd,
+        "trade_capability": trade
     }
 
 
