@@ -36,6 +36,8 @@ def find_attributes(soup, element, rating_count, rating, table_id):
 
             attb.append({"name": name, "value": value})
         return attb
+    else:
+        return attb
 
 
 def scrape_amazon_product_from_rows(url, row):
@@ -131,7 +133,7 @@ def scrape_alibaba_product_from_rows(driver_row):
     return {
         "title": title_text,
         "image": img_div,
-        "link": link,
+        "p_link": link,
         "price_range": price_range,
         "min_order": min_order,
         "details": extras
@@ -141,9 +143,6 @@ def scrape_alibaba_product_from_rows(driver_row):
 def scrape_alibaba_supplier_from_rows(item_row, driver: webdriver.Chrome):
 
     soup = BeautifulSoup(item_row.get_attribute("outerHTML"), 'html.parser')
-    # write soup to file
-    with open("soup.html", "a") as file:
-        file.write(str(soup))
 
     # check if supplier is verified
     isVerified = soup.find(

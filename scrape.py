@@ -16,7 +16,7 @@ def intial_config():
     user_agent = ua.random
 
     options = Options()
-    #options.add_argument("--headless")
+    options.add_argument("--headless")
     options.add_argument(f'user-agent={user_agent})')
     # add incognito mode to options
     options.add_argument("--incognito")
@@ -283,7 +283,6 @@ def find_suppliers_details(url):
             value = "" if value is None else value.text.strip()
             ow.append({"key": key, "value": value})
 
-    print("ow done")
     prod_capacity = company.find(
         'div', {'module-name': 'icbu-pc-cpProductionCapacity'})
     prod_tables = prod_capacity.find_all('div',
@@ -291,10 +290,9 @@ def find_suppliers_details(url):
     pc = []
 
     for i, infos in enumerate(prod_tables):
-        if i == 0:
-            continue
         title = infos.find('div', {'class': 'title'}).text.strip()
         if title == "COOPERATE FACTORY INFORMATION":
+            print(title)
             sub_tbl = []
             table = infos.find('table')
             trs = table.find_all('tr')
@@ -304,9 +302,14 @@ def find_suppliers_details(url):
                 key = tds[0].text.strip()
                 value = tds[1].text.strip()
                 sub_tbl.append({"key": key, "value": value})
-            pc.append({"cooperate_factory_information": sub_tbl})
+            pc.append({
+                "title": title,
+                "cooperate_factory_information": sub_tbl
+            })
 
         elif title == "Production Equipment":
+            print(title)
+
             table_body = infos.find('div', {'class': 'next-table-body'})
             table = table_body.find('table')
             tds = table.find_all('td')
@@ -317,6 +320,7 @@ def find_suppliers_details(url):
             verified = tds[3].text.strip()
 
             pc.append({
+                "title": title,
                 "production_equipment": {
                     "name": name,
                     "NO": no,
@@ -324,24 +328,40 @@ def find_suppliers_details(url):
                     "verified": verified
                 }
             })
-        elif title == "Factory information":
-            driver.find_element(
-                By.XPATH,
-                '//*[@id="module_ali_site"]/div/div[2]/div/div/div/div[2]/div/div[2]/div'
-            ).click()
-            sub_tbl = []
-            table = infos.find('table', {'class': 'icbu-shop-table-col'})
-            trs = table.find_all('tr')
-            for tr in trs:
-                tds = tr.find_all('td')
+        elif title == "Factory Information":
+            print(title)
+            try:
+                driver.find_element(
+                    By.XPATH,
+                    '//*[@id="module_ali_site"]/div/div[2]/div/div/div/div[2]/div/div[2]/div'
+                ).click()
+                sub_tbl = []
+                table = infos.find('table', {'class': 'icbu-shop-table-col'})
+                trs = table.find_all('tr')
+                for tr in trs:
+                    tds = tr.find_all('td')
 
-                key = tds[0].text.strip()
-                value = tds[1].text.strip()
-                sub_tbl.append({"key": key, "value": value})
+                    key = tds[0].text.strip()
+                    value = tds[1].text.strip()
+                    sub_tbl.append({"key": key, "value": value})
 
-            pc.append({"factory_information": sub_tbl})
+                pc.append({"title": title, "factory_information": sub_tbl})
+            except:
+                sub_tbl = []
+                table = infos.find('table', {'class': 'icbu-shop-table-col'})
+                trs = table.find_all('tr')
+                for tr in trs:
+                    tds = tr.find_all('td')
+
+                    key = tds[0].text.strip()
+                    value = tds[1].text.strip()
+                    sub_tbl.append({"key": key, "value": value})
+
+                pc.append({"title": title, "factory_information": sub_tbl})
 
         elif title == "Annual Production Capacity":
+            print(title)
+
             table_body = infos.find('div', {'class': 'next-table-body'})
             table = table_body.find('table')
             tds = table.find_all('td')
@@ -352,6 +372,7 @@ def find_suppliers_details(url):
             verified = tds[3].text.strip()
 
             pc.append({
+                "title": title,
                 "annual_prod_capacity": {
                     "name": name,
                     "line_capacity": line_capac,
@@ -360,7 +381,6 @@ def find_suppliers_details(url):
                 }
             })
 
-    print("pc done")
     quality_control = company.find(
         'div', {'module-name': 'icbu-pc-cpQualityControlCapacity'})
     qc = []
@@ -376,8 +396,6 @@ def find_suppliers_details(url):
                     key = tds[0].text.strip()
                     value = tds[1].text.strip()
                     qc.append({"key": key, "value": value})
-
-        print("qc done")
 
     rnd_capacity = company.find('div', {'module-name': 'icbu-pc-cpRDCapacity'})
     rnd = []
@@ -407,7 +425,6 @@ def find_suppliers_details(url):
                     "verified": verified
                 }
             })
-        print("rnd done")
 
     trade_capability = company.find(
         'div', {'module-name': 'icbu-pc-cpTradeCapability'})
@@ -441,7 +458,11 @@ def find_suppliers_details(url):
                             "verified":
                             tds[3].text.strip()
                         })
-                trade.append({"main_market_info": main_market_info})
+                trade.append({
+                    "title": title,
+                    "main_market_info": main_market_info
+                })
+
             elif title == "Trade Ability" or title == "Business Terms":
                 table = infos.find('table')
                 trs = table.find_all('tr')
@@ -453,12 +474,11 @@ def find_suppliers_details(url):
                             key = tds[0].text.strip()
                             value = tds[1].text.strip()
                             tt.append({"key": key, "value": value})
-                    if i == 1:
-                        trade.append({"trade_ability": tt})
-                    elif i == 2:
-                        trade.append({"business_terms": tt})
+                    if title == "Trade Ability":
+                        trade.append({"title": title, "trade_ability": tt})
+                    elif title == "Business Terms":
+                        trade.append({"title": title, "business_terms": tt})
 
-        print("trade done")
     driver.quit()
 
     return {
