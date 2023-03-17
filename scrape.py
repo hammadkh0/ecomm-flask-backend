@@ -8,6 +8,7 @@ from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
 from scrape_util import scrape_amazon_product_from_rows, scrape_amazon_categories_from_rows, scrape_alibaba_product_from_rows, scrape_alibaba_supplier_from_rows, find_attributes
+from summarize import get_keywords
 
 
 def intial_config():
@@ -154,6 +155,7 @@ def find_product_details(url):
     reviews_link = soup.find('a', {'data-hook': 'see-all-reviews-link-foot'})
     reviews_link = "" if reviews_link is None else "amazon.com" + reviews_link[
         "href"]
+    keywords_list = get_keywords(title)
     driver.quit()
     return {
         "product": {
@@ -166,7 +168,8 @@ def find_product_details(url):
             "attributes": attb,
             "featured_bullets": fl,
             "description": description_txt,
-            "reviews_link": reviews_link
+            "reviews_link": reviews_link,
+            "keywords_list": keywords_list
         }
     }
 

@@ -3,6 +3,7 @@ from flask_cors import CORS
 from sentiment import get_sentiment
 from send_requests import product_list_request, specific_product_request, product_reviews_request
 from scrape import find_suppliers_list, find_suppliers_details, find_supplier_prodcut_details
+from summarize import generate_summary
 
 # create the Flask app
 app = Flask(__name__)
@@ -193,6 +194,28 @@ def analyze_sentiment():
         sentiment_data = get_sentiment(reviews)
 
         response = app.response_class(response=json.dumps(sentiment_data),
+                                      status=200,
+                                      mimetype='application/json')
+        return response
+
+
+@app.route('/ecomm/summary', methods=['POST'])
+def get_summary():
+    if request.method == 'OPTIONS':
+        headers = {
+            'Access-Control-Allow-Origin':
+            '*',
+            'Access-Control-Allow-Methods':
+            'POST',
+            'Access-Control-Allow-Headers':
+            'Content-Type, Authorization, Access-Control-Allow-Origin'
+        }
+        return ('', 204, headers)
+    else:
+        request_data = request.get_json()
+        text = request_data['reviewsText']
+        summary = generate_summary(text)
+        response = app.response_class(response=json.dumps(summary),
                                       status=200,
                                       mimetype='application/json')
         return response

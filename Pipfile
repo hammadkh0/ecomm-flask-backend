@@ -14,6 +14,7 @@ numpy = "*"
 nltk = "*"
 torch = "*"
 scipy = "*"
+rake-nltk = "*"
 
 [dev-packages]
 yapf = "*"
