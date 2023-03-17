@@ -13,6 +13,7 @@ pandas = "*"
 numpy = "*"
 nltk = "*"
 torch = "*"
+scipy = "*"
 
 [dev-packages]
 yapf = "*"

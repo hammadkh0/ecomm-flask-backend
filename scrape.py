@@ -181,6 +181,7 @@ def find_product_reviews(url):
     raw_reviews = review_div.find_all('div', {'data-hook': 'review'})
 
     reviews = []
+    i = 0
     for raw_item in raw_reviews:
         author = raw_item.find('span', {'class': 'a-profile-name'})
         author = "" if author is None else author.text
@@ -195,11 +196,13 @@ def find_product_reviews(url):
         body = "" if body is None else body.text.strip()
 
         reviews.append({
+            "id": i,
             "author": author,
             "rating": rating,
             "title": title,
             "body": body
         })
+        i += 1
 
     return {"reviews": reviews, "item_count": len(reviews)}
 

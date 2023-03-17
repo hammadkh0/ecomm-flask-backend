@@ -1,6 +1,6 @@
 from flask import Flask, request, json
 from flask_cors import CORS
-from sentiment import get_sentiments
+from sentiment import get_sentiment
 from send_requests import product_list_request, specific_product_request, product_reviews_request
 from scrape import find_suppliers_list, find_suppliers_details, find_supplier_prodcut_details
 
@@ -174,26 +174,28 @@ def get_supplier_product_details():
 
 @app.route('/ecomm/sentiment', methods=['POST'])
 def analyze_sentiment():
-    sentiment_data = []
-    request_data = request.get_json()
+    if request.method == 'OPTIONS':
+        headers = {
+            'Access-Control-Allow-Origin':
+            '*',
+            'Access-Control-Allow-Methods':
+            'POST',
+            'Access-Control-Allow-Headers':
+            'Content-Type, Authorization, Access-Control-Allow-Origin'
+        }
+        return ('', 204, headers)
+    else:
+        sentiment_data = []
+        request_data = request.get_json()
 
-    # app.logger.info("" + request_data)
-    reviews = request_data['reviews']
-    sentiment_data = get_sentiments(reviews)
-    # for review in reviews:
-    #     roberta_result = polarity_scores_roberta(review["body"])
-    #     if (roberta_result['roberta_neg'] > roberta_result['roberta_pos']):
-    #         sentiment_data.append({"id": review["id"], "body": review["body"]})
+        # app.logger.info("" + request_data)
+        reviews = request_data['reviews']
+        sentiment_data = get_sentiment(reviews)
 
-    response = app.response_class(response=json.dumps(sentiment_data),
-                                  status=200,
-                                  mimetype='application/json')
-    return response
-
-    # return '''
-    # Length: {}
-    #     The sentiment of the reviews are {}.
-    # '''.format(len(sentiment_data), sentiment_data)
+        response = app.response_class(response=json.dumps(sentiment_data),
+                                      status=200,
+                                      mimetype='application/json')
+        return response
 
 
 if __name__ == '__main__':
