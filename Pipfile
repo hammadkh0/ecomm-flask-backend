@@ -15,6 +15,7 @@ nltk = "*"
 torch = "*"
 scipy = "*"
 rake-nltk = "*"
+pytrends = "*"
 
 [dev-packages]
 yapf = "*"

@@ -4,6 +4,7 @@ from sentiment import get_sentiment
 from send_requests import product_by_asin, product_list_request, specific_product_request, product_reviews_request
 from scrape import find_suppliers_list, find_suppliers_details, find_supplier_prodcut_details
 from summarize import generate_summary
+from trends import get_related_results, get_trends_by_region
 
 # create the Flask app
 app = Flask(__name__)
@@ -252,6 +253,43 @@ def get_summary():
                                       status=200,
                                       mimetype='application/json')
         return response
+
+
+@app.route('/ecomm/trends', methods=['POST'])
+def get_trends():
+    if request.method == 'OPTIONS':
+        headers = {
+            'Access-Control-Allow-Origin':
+            '*',
+            'Access-Control-Allow-Methods':
+            'POST',
+            'Access-Control-Allow-Headers':
+            'Content-Type, Authorization, Access-Control-Allow-Origin'
+        }
+        return ('', 204, headers)
+    else:
+        try:
+            request_data = request.get_json()
+            keywords = request_data['keywords']
+            trends1 = get_trends_by_region(keywords)
+            trends2 = get_related_results(keywords)
+            response = app.response_class(response=json.dumps({
+                "trending_regions":
+                trends1,
+                "related_results":
+                trends2
+            }),
+                                          status=200,
+                                          mimetype='application/json')
+            return response
+        except Exception as e:
+            response = app.response_class(response=json.dumps({
+                "error": str(e),
+                "status": 500
+            }),
+                                          status=500,
+                                          mimetype='application/json')
+            return response
 
 
 if __name__ == '__main__':
