@@ -246,7 +246,6 @@ def find_best_sellers():
     action = ActionChains(driver)
     driver.get("https://www.amazon.com/Best-Sellers/zgbs")
 
-    # best_categories = soup.find_all('div', {'class': 'a-carousel-row-inner'})
     best_categories = driver.find_elements(By.CSS_SELECTOR,
                                            ".a-section.a-spacing-large")
 
@@ -279,16 +278,12 @@ def find_best_sellers():
 
                 # id of the item div
 
-                image = item.find('img')
-                image = "" if image is None else image['src']
-                title_d = item.find('a', {'class': 'a-link-normal'})
-                title_d = "" if title_d is None else title_d
-                title = item.find('div', {
-                    'class':
-                    'p13n-sc-truncate-desktop-type2  p13n-sc-truncated'
-                })
-                title = "" if title is None else title["title"]
-                link = "" if title_d is None else title_d['href']
+                image_tag = item.find('img')
+                image = "" if image_tag is None else image_tag['src']
+                title = "" if image_tag is None else image_tag["alt"]
+
+                link_tag = item.find('a', {'class': 'a-link-normal'})
+                link = "" if link_tag is None else link_tag['href']
 
                 rating_div = item.find('div', {'class': 'a-icon-row'})
                 rating = "" if rating_div is None else rating_div.a[
@@ -297,18 +292,24 @@ def find_best_sellers():
                 rating_count = item.find('span', {'class': 'a-size-small'})
                 rating_count = "" if rating_count is None else rating_count.text
 
+                price = item.find('span', {'class': 'a-color-secondary'})
+                if price is None:
+                    price = item.find('span',
+                                      {'class': '_cDEzb_p13n-sc-price_3mJ9Z'})
+                price = "" if price is None else price.text
                 sub_list.append({
                     "asin": asin,
                     "image": image,
                     "title": title,
                     "link": link,
                     "rating": rating,
-                    "rating_count": rating_count
+                    "rating_count": rating_count,
+                    "price": price
                 })
 
             category.find_elements(By.CSS_SELECTOR,
-                                   ".a-button-inner")[1].click()
-            time.sleep(1.5)
+                                   ".a-button-inner")[0].click()
+            time.sleep(1.7)
         best_sellers.append({"category": category_name, "items": sub_list})
 
     return best_sellers
