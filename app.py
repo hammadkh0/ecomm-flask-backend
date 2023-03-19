@@ -6,9 +6,22 @@ from scrape import find_suppliers_list, find_suppliers_details, find_supplier_pr
 from summarize import generate_summary
 from trends import get_related_results, get_trends_by_region
 
+import math, json
+
 # create the Flask app
 app = Flask(__name__)
 CORS(app)
+
+
+def replace_nan_with_null(obj):
+    if isinstance(obj, float) and math.isnan(obj):
+        return "-"
+    elif isinstance(obj, dict):
+        return {k: replace_nan_with_null(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [replace_nan_with_null(v) for v in obj]
+    else:
+        return obj
 
 
 @app.route('/ecomm/products', methods=['POST', 'OPTIONS'])
@@ -273,12 +286,12 @@ def get_trends():
             keywords = request_data['keywords']
             trends1 = get_trends_by_region(keywords)
             trends2 = get_related_results(keywords)
-            response = app.response_class(response=json.dumps({
-                "trending_regions":
-                trends1,
-                "related_results":
-                trends2
-            }),
+            response = app.response_class(response=json.dumps(
+                replace_nan_with_null({
+                    "trending_regions": trends1,
+                    "related_results": trends2
+                }),
+                sort_keys=False),
                                           status=200,
                                           mimetype='application/json')
             return response

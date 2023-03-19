@@ -57,8 +57,15 @@ def get_trends_by_region(keywords: str):
     # remove rows with value 0
 
     df = df[df[keywords] != 0]
-    # convert df to a dictionary
+
+    # rename column name keywords to values
+    column_name = "kw-" + "_".join(keywords.split(" "))
+    df.rename(columns={keywords: column_name}, inplace=True)
+
+    # convert df to a dictionary with {region: value}
     df = df.to_dict()
+    df = df[column_name]
+
     return df
 
 
@@ -90,7 +97,7 @@ def get_formatted_data(data, type):
     top = list(data.values())[0]['top']
     rising = list(data.values())[0]['rising']
 
-    #convert lists to dataframes
+    # convert lists to dataframes
     if (type == "rt"):
         dftop = pd.DataFrame(top,
                              columns=['value', 'topic_title', 'topic_type'])
@@ -100,11 +107,11 @@ def get_formatted_data(data, type):
         dftop = pd.DataFrame(top)
         dfrising = pd.DataFrame(rising)
 
-    #join two data frames
+    # join two data frames
     joindfs = [dftop, dfrising]
     allqueries = pd.concat(joindfs, axis=1)
 
-    #function to change duplicates
+    # function to change duplicates
     cols = pd.Series(allqueries.columns)
     for dup in allqueries.columns[allqueries.columns.duplicated(keep=False)]:
         cols[allqueries.columns.get_loc(dup)] = ([
@@ -113,7 +120,7 @@ def get_formatted_data(data, type):
         ])
     allqueries.columns = cols
 
-    #rename to proper names
+    # rename to proper names
     allqueries.rename(
         {
             'query': 'top_query',

@@ -5,11 +5,7 @@ from transformers import (
 )
 from torch import nn
 
-class_names = ["negative", "positive"]
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 PRE_TRAINED_MODEL_NAME = "bert-base-cased"
-tokenizer = BertTokenizer.from_pretrained(PRE_TRAINED_MODEL_NAME)
-max_length = 1000
 
 
 class SentimentPredictor(nn.Module):
@@ -28,17 +24,26 @@ class SentimentPredictor(nn.Module):
         return self.out(output)
 
 
-model = SentimentPredictor(len(class_names))
-model = model.to(device)
+def init_config():
+    class_names = ["negative", "positive"]
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    tokenizer = BertTokenizer.from_pretrained(PRE_TRAINED_MODEL_NAME)
 
-model.load_state_dict(
-    torch.load(
-        "./best_model_state.bin",
-        map_location=torch.device("cpu"),
-    ))
+    model = SentimentPredictor(len(class_names))
+    model = model.to(device)
+
+    model.load_state_dict(
+        torch.load(
+            "./best_model_state.bin",
+            map_location=torch.device("cpu"),
+        ))
+
+    return tokenizer, model, class_names, device
 
 
 def get_sentiment(reviews):
+    tokenizer, model, class_names, device = init_config()
+
     negative_reviews = []
     for review in reviews:
         review_txt = review["body"]
