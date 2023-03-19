@@ -1,7 +1,7 @@
 from flask import Flask, request, json
 from flask_cors import CORS
 from sentiment import get_sentiment
-from send_requests import product_by_asin, product_list_request, specific_product_request, product_reviews_request
+from send_requests import best_seller_request, product_by_asin, product_list_request, specific_product_request, product_reviews_request
 from scrape import find_suppliers_list, find_suppliers_details, find_supplier_prodcut_details
 from summarize import generate_summary
 from trends import get_related_results, get_trends_by_region
@@ -142,6 +142,36 @@ def get_search_product(asin):
             details = product_by_asin(url, asin)
 
             return app.response_class(response=json.dumps(details),
+                                      status=200,
+                                      mimetype='application/json')
+        except Exception as e:
+            response = app.response_class(response=json.dumps({
+                "ERROR": str(e),
+                "status": 500
+            }),
+                                          status=500,
+                                          mimetype='application/json')
+            return response
+
+
+@app.route('/ecomm/products/best-sellers', methods=['GET', 'OPTIONS'])
+def get_best_sellers():
+    if request.method == 'OPTIONS':
+        headers = {
+            'Access-Control-Allow-Origin':
+            '*',
+            'Access-Control-Allow-Methods':
+            'POST',
+            'Access-Control-Allow-Headers':
+            'Content-Type, Authorization, Access-Control-Allow-Origin'
+        }
+        return ('', 204, headers)
+    else:
+
+        try:
+            data = best_seller_request()
+
+            return app.response_class(response=json.dumps(data),
                                       status=200,
                                       mimetype='application/json')
         except Exception as e:

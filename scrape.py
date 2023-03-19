@@ -6,6 +6,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.action_chains import ActionChains
 
 from scrape_util import scrape_amazon_product_from_rows, scrape_amazon_categories_from_rows, scrape_alibaba_product_from_rows, scrape_alibaba_supplier_from_rows, find_attributes
 from summarize import get_keywords
@@ -238,6 +239,79 @@ def find_product_reviews(url):
         i += 1
 
     return {"reviews": reviews, "item_count": len(reviews)}
+
+
+def find_best_sellers():
+    driver = intial_config()
+    action = ActionChains(driver)
+    driver.get("https://www.amazon.com/Best-Sellers/zgbs")
+
+    # best_categories = soup.find_all('div', {'class': 'a-carousel-row-inner'})
+    best_categories = driver.find_elements(By.CSS_SELECTOR,
+                                           ".a-section.a-spacing-large")
+
+    best_sellers = []
+    for i, category in enumerate(best_categories):
+        if (i == len(best_categories)):
+            break
+        try:
+            action.move_to_element(category).perform()
+            category_name = category.find_element(
+                By.CSS_SELECTOR, '.a-carousel-heading.a-inline-block').text
+        except:
+            category_name = ""
+
+        sub_list = []
+        for i in range(2):
+            best_items = category.find_elements(By.CSS_SELECTOR,
+                                                '.a-carousel-card')
+
+            best_items = [
+                BeautifulSoup(element.get_attribute("outerHTML"),
+                              "html.parser") for element in best_items
+            ]
+
+            for product in best_items:
+                item = product.find('div',
+                                    {'class': 'p13n-sc-uncoverable-faceout'})
+                item = "" if item is None else item
+                asin = "" if item is None else item['id']
+
+                # id of the item div
+
+                image = item.find('img')
+                image = "" if image is None else image['src']
+                title_d = item.find('a', {'class': 'a-link-normal'})
+                title_d = "" if title_d is None else title_d
+                title = item.find('div', {
+                    'class':
+                    'p13n-sc-truncate-desktop-type2  p13n-sc-truncated'
+                })
+                title = "" if title is None else title["title"]
+                link = "" if title_d is None else title_d['href']
+
+                rating_div = item.find('div', {'class': 'a-icon-row'})
+                rating = "" if rating_div is None else rating_div.a[
+                    'title'].split(" ")[0]
+
+                rating_count = item.find('span', {'class': 'a-size-small'})
+                rating_count = "" if rating_count is None else rating_count.text
+
+                sub_list.append({
+                    "asin": asin,
+                    "image": image,
+                    "title": title,
+                    "link": link,
+                    "rating": rating,
+                    "rating_count": rating_count
+                })
+
+            category.find_elements(By.CSS_SELECTOR,
+                                   ".a-button-inner")[1].click()
+            time.sleep(1.5)
+        best_sellers.append({"category": category_name, "items": sub_list})
+
+    return best_sellers
 
 
 def find_suppliers_list(input_term):
