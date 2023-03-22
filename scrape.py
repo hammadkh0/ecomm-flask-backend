@@ -647,7 +647,11 @@ def find_supplier_prodcut_details(url):
     el = []
     if essential_info is not None:
         entry_list = essential_info.find('div', {'class': 'do-entry-list'})
+        entry_list = "" if entry_list is None else entry_list
+
         entry_list = entry_list.find_all('dl', {'class': 'do-entry-item'})
+        entry_list = [] if entry_list is None else entry_list
+
         for element in entry_list:
             key = element.find('span', {'class': 'attr-name J-attr-name'})
             key = "" if key is None else key["title"].strip()
@@ -660,7 +664,11 @@ def find_supplier_prodcut_details(url):
     sa = []
     if supply_ability is not None:
         entry_list = supply_ability.find('div', {'class': 'do-entry-list'})
+        entry_list = "" if entry_list is None else entry_list
+
         entry_list = entry_list.find_all('dl', {'class': 'do-entry-item'})
+        entry_list = [] if entry_list is None else entry_list
+
         for element in entry_list:
             key = element.find('dt')
             key = "" if key is None else key["title"]
@@ -673,7 +681,11 @@ def find_supplier_prodcut_details(url):
     pa = []
     if package_ability is not None:
         entry_list = package_ability.find('div', {'class': 'do-entry-list'})
+        entry_list = "" if entry_list is None else entry_list
+
         entry_list = entry_list.find_all('dl', {'class': 'do-entry-item'})[:2]
+        entry_list = [] if entry_list is None else entry_list
+
         for element in entry_list:
             key = element.find('dt')
             key = "" if key is None else key["title"].strip()

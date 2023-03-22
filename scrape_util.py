@@ -45,6 +45,9 @@ def scrape_amazon_product_from_rows(url, row):
 
     title = row.find('span',
                      {"class": "a-size-medium a-color-base a-text-normal"})
+    if title is None:
+        title = row.find(
+            'span', {"class": "a-size-base-plus a-color-base a-text-normal"})
     title = "" if title is None else title.text
 
     img = row.find('img', {"class": "s-image"})
