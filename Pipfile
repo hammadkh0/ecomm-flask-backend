@@ -6,6 +6,16 @@ name = "pypi"
 [packages]
 flask = "*"
 transformers = "*"
+selenium = "*"
+webdriver-manager = "*"
+fake-useragent = "*"
+pandas = "*"
+numpy = "*"
+nltk = "*"
+torch = "*"
+scipy = "*"
+rake-nltk = "*"
+pytrends = "*"
 
 [dev-packages]
 yapf = "*"
