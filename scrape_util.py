@@ -1,7 +1,11 @@
-from bs4 import BeautifulSoup
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
+from fake_useragent import UserAgent
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.action_chains import ActionChains
+from bs4 import BeautifulSoup
 
 
 def find_attributes(soup, element, rating_count, rating, table_id):
@@ -95,6 +99,63 @@ def scrape_amazon_categories_from_rows(soup):
         categories.append(item2)
 
     return categories
+
+
+def scrape_amazon_reviews(url_variable_pair):
+    url, variable_value = url_variable_pair
+
+    ua = UserAgent()
+    user_agent = ua.random
+
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument(f'user-agent={user_agent})')
+    # add incognito mode to options
+    options.add_argument("--incognito")
+
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()),
+        options=options,
+    )
+
+    print(options.arguments)
+    print("----------------------------------------")
+
+    driver.set_window_size(1366, 768)
+    driver.get('https://www.amazon.com')
+    driver.get(url)
+
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+    review_div = soup.find(id="cm_cr-review_list")
+    raw_reviews = review_div.find_all('div', {'data-hook': 'review'})
+    if raw_reviews is None:
+        return []
+
+    reviews = []
+    i = (variable_value - 1) * 10 + 1
+    for raw_item in raw_reviews:
+        author = raw_item.find('span', {'class': 'a-profile-name'})
+        author = "" if author is None else author.text
+
+        rating = raw_item.find('i', {'data-hook': 'review-star-rating'})
+        rating = "" if rating is None else rating.span.text.split(" ")[0]
+
+        title = raw_item.find('a', {'data-hook': 'review-title'})
+        title = "" if title is None else title.text.strip()
+
+        body = raw_item.find('span', {'data-hook': 'review-body'})
+        body = "" if body is None else body.text.strip()
+
+        reviews.append({
+            "id": i,
+            "author": author,
+            "rating": rating,
+            "title": title,
+            "body": body
+        })
+        i += 1
+    return reviews
 
 
 def scrape_alibaba_product_from_rows(driver_row):

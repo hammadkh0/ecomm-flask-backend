@@ -1,4 +1,7 @@
 import time
+import concurrent.futures
+
+from itertools import chain
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from selenium import webdriver
@@ -8,7 +11,7 @@ from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
 
-from scrape_util import scrape_amazon_product_from_rows, scrape_amazon_categories_from_rows, scrape_alibaba_product_from_rows, scrape_alibaba_supplier_from_rows, find_attributes
+from scrape_util import scrape_amazon_product_from_rows, scrape_amazon_categories_from_rows, scrape_alibaba_product_from_rows, scrape_alibaba_supplier_from_rows, find_attributes, scrape_amazon_reviews
 from summarize import get_keywords
 
 
@@ -18,7 +21,7 @@ def intial_config():
     user_agent = ua.random
 
     options = Options()
-    #options.add_argument("--headless")
+    options.add_argument("--headless")
     options.add_argument(f'user-agent={user_agent})')
     # add incognito mode to options
     options.add_argument("--incognito")
@@ -205,38 +208,27 @@ def search_asin(url, asin):
         }
 
 
-def find_product_reviews(url):
-    driver = intial_config()
+def find_product_reviews(url, asin='B098FKXT8L'):
 
-    driver.get("https://" + url)
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-
-    review_div = soup.find(id="cm_cr-review_list")
-    raw_reviews = review_div.find_all('div', {'data-hook': 'review'})
-
+    urls = []
     reviews = []
-    i = 0
-    for raw_item in raw_reviews:
-        author = raw_item.find('span', {'class': 'a-profile-name'})
-        author = "" if author is None else author.text
+    for i in range(1, 5):
+        urls.append(
+            f"https://www.amazon.com/{url}&sortBy=recent&pageNumber={i}")
 
-        rating = raw_item.find('i', {'data-hook': 'review-star-rating'})
-        rating = "" if rating is None else rating.span.text.split(" ")[0]
+    # Create a list of variable values from 1 to the length of urls
+    variable_values = list(range(1, len(urls) + 1))
 
-        title = raw_item.find('a', {'data-hook': 'review-title'})
-        title = "" if title is None else title.text.strip()
+    # Zip the urls and the variable values together
+    url_variable_pairs = zip(urls, variable_values)
 
-        body = raw_item.find('span', {'data-hook': 'review-body'})
-        body = "" if body is None else body.text.strip()
-
-        reviews.append({
-            "id": i,
-            "author": author,
-            "rating": rating,
-            "title": title,
-            "body": body
-        })
-        i += 1
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = executor.map(scrape_amazon_reviews, url_variable_pairs)
+        if results is None:
+            pass
+        else:
+            #reviews = [*reviews, *list(results)]
+            reviews = reviews + list(chain(*results))
 
     return {"reviews": reviews, "item_count": len(reviews)}
 
