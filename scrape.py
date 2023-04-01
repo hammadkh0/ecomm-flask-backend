@@ -60,7 +60,7 @@ def find_product_list(url, user_input):
     return {"products": scraped_items, "item_count": total_items}
 
 
-def find_product_details(url):
+def find_product_details(url, asin):
 
     driver = selenium_config()
     driver.get(url)
@@ -70,7 +70,11 @@ def find_product_details(url):
 
     # find the product title
     title = soup.find(id="productTitle").get_text().strip()
-
+    if title is None:
+        return {
+            "error": f"No items were found for the asin: {asin}",
+            "status": 404
+        }
     # find the product rating
     rating = soup.find('span', {'class': 'a-icon-alt'})
     rating = "" if rating is None else rating.text
@@ -133,11 +137,11 @@ def find_product_details(url):
 
     # get the reviews link of the product
     reviews_link = soup.find('a', {'data-hook': 'see-all-reviews-link-foot'})
-    reviews_link = "" if reviews_link is None else "amazon.com" + reviews_link[
-        "href"]
+    reviews_link = "" if reviews_link is None else reviews_link["href"]
     keywords_list = get_keywords(title)
     driver.quit()
     return {
+        "status": 200,
         "product": {
             "title": title,
             "rating": rating,
@@ -152,19 +156,6 @@ def find_product_details(url):
             "keywords_list": keywords_list
         }
     }
-
-
-def search_asin(url, asin):
-    try:
-        url = url + asin
-        details = find_product_details(url)
-        return details
-    except Exception as e:
-        print(e)
-        return {
-            "Error": "No items were found for the asin: " + asin,
-            "status": 404
-        }
 
 
 def find_product_reviews(url, asin='B098FKXT8L'):

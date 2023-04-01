@@ -12,7 +12,7 @@ def selenium_config():
     user_agent = ua.random
 
     options = Options()
-    #options.add_argument("--headless")
+    options.add_argument("--headless")
     options.add_argument(f'user-agent={user_agent})')
     # add incognito mode to options
     options.add_argument("--incognito")
