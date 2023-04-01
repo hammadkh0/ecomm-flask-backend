@@ -1,11 +1,9 @@
-from fake_useragent import UserAgent
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
 from bs4 import BeautifulSoup
+
+from configs import selenium_config
 
 
 def find_attributes(soup, element, rating_count, rating, table_id):
@@ -104,24 +102,8 @@ def scrape_amazon_categories_from_rows(soup):
 def scrape_amazon_reviews(url_variable_pair):
     url, variable_value = url_variable_pair
 
-    ua = UserAgent()
-    user_agent = ua.random
+    driver = selenium_config()
 
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument(f'user-agent={user_agent})')
-    # add incognito mode to options
-    options.add_argument("--incognito")
-
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
-        options=options,
-    )
-
-    print(options.arguments)
-    print("----------------------------------------")
-
-    driver.set_window_size(1366, 768)
     driver.get('https://www.amazon.com')
     driver.get(url)
 
