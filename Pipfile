@@ -16,6 +16,8 @@ torch = "*"
 scipy = "*"
 rake-nltk = "*"
 pytrends = "*"
+requests-cache = "*"
+flask-caching = "*"
 
 [dev-packages]
 yapf = "*"

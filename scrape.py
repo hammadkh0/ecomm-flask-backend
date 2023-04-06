@@ -1,43 +1,22 @@
 import time
+import concurrent.futures
+
+from itertools import chain
 from bs4 import BeautifulSoup
-from fake_useragent import UserAgent
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+
 from selenium.webdriver.common.by import By
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
 
-from scrape_util import scrape_amazon_product_from_rows, scrape_amazon_categories_from_rows, scrape_alibaba_product_from_rows, scrape_alibaba_supplier_from_rows, find_attributes
+from configs import selenium_config
+
+from scrape_util import scrape_amazon_product_from_rows, scrape_amazon_categories_from_rows, scrape_alibaba_product_from_rows, scrape_alibaba_supplier_from_rows, find_attributes, scrape_amazon_reviews
+
 from summarize import get_keywords
-
-
-def intial_config():
-
-    ua = UserAgent()
-    user_agent = ua.random
-
-    options = Options()
-    #options.add_argument("--headless")
-    options.add_argument(f'user-agent={user_agent})')
-    # add incognito mode to options
-    options.add_argument("--incognito")
-
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),
-                              options=options)
-
-    print(options.arguments)
-    print("----------------------------------------")
-
-    driver.set_window_size(1366, 768)
-    # simulate headless mode by minimizing the window
-    #driver.set_window_position(-2000, 0)
-    return driver
 
 
 def find_product_list(url, user_input):
 
-    driver = intial_config()
+    driver = selenium_config()
 
     #load page with beautiful soup
     driver.get(url)
@@ -81,18 +60,21 @@ def find_product_list(url, user_input):
     return {"products": scraped_items, "item_count": total_items}
 
 
-def find_product_details(url, asin=None, driver=None):
-    if asin is None and driver is None:
-        driver = intial_config()
+def find_product_details(url, asin):
 
-        driver.get(url)
+    driver = selenium_config()
+    driver.get(url)
 
     # convert the page to beautiful soup
     soup = BeautifulSoup(driver.page_source, "html.parser")
 
     # find the product title
     title = soup.find(id="productTitle").get_text().strip()
-
+    if title is None:
+        return {
+            "error": f"No items were found for the asin: {asin}",
+            "status": 404
+        }
     # find the product rating
     rating = soup.find('span', {'class': 'a-icon-alt'})
     rating = "" if rating is None else rating.text
@@ -155,11 +137,11 @@ def find_product_details(url, asin=None, driver=None):
 
     # get the reviews link of the product
     reviews_link = soup.find('a', {'data-hook': 'see-all-reviews-link-foot'})
-    reviews_link = "" if reviews_link is None else "amazon.com" + reviews_link[
-        "href"]
+    reviews_link = "" if reviews_link is None else reviews_link["href"]
     keywords_list = get_keywords(title)
     driver.quit()
     return {
+        "status": 200,
         "product": {
             "title": title,
             "rating": rating,
@@ -176,73 +158,33 @@ def find_product_details(url, asin=None, driver=None):
     }
 
 
-def search_asin(url, asin):
-    driver = intial_config()
+def find_product_reviews(url, asin='B098FKXT8L'):
 
-    driver.get(url)
-    #driver.get_screenshot_as_file("screenshot1.png")
-
-    # find the search bar and enter the input
-    driver.find_element(By.ID, "twotabsearchtextbox").send_keys(asin)
-    # click the search button
-    driver.find_element(By.ID, "nav-search-submit-button").click()
-
-    # find element with property data-asin
-    try:
-        driver.find_element(
-            By.XPATH,
-            '//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[2]').click(
-            )
-        time.sleep(2)
-        # get the url from browser
-        details = find_product_details(url, asin, driver)
-        return details
-    except Exception as e:
-        print(e)
-        return {
-            "Error": "No items were found for the asin: " + asin,
-            "status": 404
-        }
-
-
-def find_product_reviews(url):
-    driver = intial_config()
-
-    driver.get("https://" + url)
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-
-    review_div = soup.find(id="cm_cr-review_list")
-    raw_reviews = review_div.find_all('div', {'data-hook': 'review'})
-
+    urls = []
     reviews = []
-    i = 0
-    for raw_item in raw_reviews:
-        author = raw_item.find('span', {'class': 'a-profile-name'})
-        author = "" if author is None else author.text
+    for i in range(1, 5):
+        urls.append(
+            f"https://www.amazon.com/{url}&sortBy=recent&pageNumber={i}")
 
-        rating = raw_item.find('i', {'data-hook': 'review-star-rating'})
-        rating = "" if rating is None else rating.span.text.split(" ")[0]
+    # Create a list of variable values from 1 to the length of urls
+    variable_values = list(range(1, len(urls) + 1))
 
-        title = raw_item.find('a', {'data-hook': 'review-title'})
-        title = "" if title is None else title.text.strip()
+    # Zip the urls and the variable values together
+    url_variable_pairs = zip(urls, variable_values)
 
-        body = raw_item.find('span', {'data-hook': 'review-body'})
-        body = "" if body is None else body.text.strip()
-
-        reviews.append({
-            "id": i,
-            "author": author,
-            "rating": rating,
-            "title": title,
-            "body": body
-        })
-        i += 1
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = executor.map(scrape_amazon_reviews, url_variable_pairs)
+        if results is None:
+            pass
+        else:
+            #reviews = [*reviews, *list(results)]
+            reviews = reviews + list(chain(*results))
 
     return {"reviews": reviews, "item_count": len(reviews)}
 
 
 def find_best_sellers():
-    driver = intial_config()
+    driver = selenium_config()
     action = ActionChains(driver)
     driver.get("https://www.amazon.com/Best-Sellers/zgbs")
 
@@ -316,7 +258,7 @@ def find_best_sellers():
 
 
 def find_suppliers_list(input_term):
-    driver = intial_config()
+    driver = selenium_config()
 
     driver.get("https://alibaba.com")
 
@@ -358,7 +300,7 @@ def find_suppliers_list(input_term):
 
 
 def find_suppliers_details(url):
-    driver = intial_config()
+    driver = selenium_config()
     driver.get("https:" + url)
 
     L = driver.find_elements(By.CSS_SELECTOR,
@@ -603,7 +545,7 @@ def find_suppliers_details(url):
 
 def find_supplier_prodcut_details(url):
 
-    driver = intial_config()
+    driver = selenium_config()
 
     driver.get("https:" + url)
 
