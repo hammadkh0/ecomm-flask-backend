@@ -12,7 +12,8 @@ from scrape import find_suppliers_list, find_suppliers_details, find_supplier_pr
 from summarize import generate_summary
 from trends import get_related_results, get_trends_by_region
 
-import math, json
+import math
+import json
 
 # create the Flask app
 app = Flask(__name__)
@@ -59,8 +60,8 @@ def get_products():
                 "ERROR": str(e),
                 "status": 500
             }),
-                                          status=500,
-                                          mimetype='application/json')
+                status=500,
+                mimetype='application/json')
             return response
 
 
@@ -98,8 +99,8 @@ def get_reviews(asin):
                 "ERROR": str(e),
                 "status": 500
             }),
-                                          status=500,
-                                          mimetype='application/json')
+                status=500,
+                mimetype='application/json')
             return response
 
 
@@ -170,8 +171,8 @@ def get_best_sellers():
                 "ERROR": str(e),
                 "status": 500
             }),
-                                          status=500,
-                                          mimetype='application/json')
+                status=500,
+                mimetype='application/json')
             return response
 
 
@@ -194,8 +195,8 @@ def get_suppliers():
             "error": str(e),
             "status": 500
         }),
-                                      status=500,
-                                      mimetype='application/json')
+            status=500,
+            mimetype='application/json')
         return response
 
 
@@ -215,8 +216,8 @@ def get_supplier_details():
             "error": str(e),
             "status": 500
         }),
-                                      status=500,
-                                      mimetype='application/json')
+            status=500,
+            mimetype='application/json')
         return response
 
 
@@ -236,8 +237,8 @@ def get_supplier_product_details():
             "error": str(e),
             "status": 500
         }),
-                                      status=500,
-                                      mimetype='application/json')
+            status=500,
+            mimetype='application/json')
         return response
 
 
@@ -313,17 +314,22 @@ def get_trends():
                     "related_results": trends2
                 }),
                 sort_keys=False),
-                                          status=200,
-                                          mimetype='application/json')
+                status=200,
+                mimetype='application/json')
             return response
         except Exception as e:
             response = app.response_class(response=json.dumps({
                 "error": str(e),
                 "status": 500
             }),
-                                          status=500,
-                                          mimetype='application/json')
+                status=500,
+                mimetype='application/json')
             return response
+
+
+@app.route('/about')
+def about():
+    return 'About'
 
 
 if __name__ == '__main__':
