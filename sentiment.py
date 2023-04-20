@@ -29,35 +29,35 @@ class SentimentPredictor(nn.Module):
         return self.out(output)
 
 
-def init_config():
-    class_names = ["negative", "positive"]
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    tokenizer = BertTokenizer.from_pretrained(PRE_TRAINED_MODEL_NAME)
+# def init_config():
+class_names = ["negative", "positive"]
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+tokenizer = BertTokenizer.from_pretrained(PRE_TRAINED_MODEL_NAME)
 
-    model = SentimentPredictor(len(class_names))
-    model = model.to(device)
+model = SentimentPredictor(len(class_names))
+model = model.to(device)
 
-    model.load_state_dict(
-        torch.load(
-            "./models/best_model_state.bin",
-            map_location=torch.device("cpu"),
-        ))
-    return tokenizer, model, class_names, device
+model.load_state_dict(
+    torch.load(
+        "./models/best_model_state.bin",
+        map_location=torch.device("cpu"),
+    ))
+# return tokenizer, model, class_names, device
 
 
 def get_sentiment(reviews):
 
-    split_val = math.floor(len(reviews) / 5)
+    # split_val = math.floor(len(reviews) / 5)
     negative_reviews = []
-    split_reviews = []
-    tasks = []
+    # split_reviews = []
+    # tasks = []
     # e.g 40 reviews, split_val = 5, split_reviews = [[0:8], [9:16], [17:24],[25:32], [33:40]]
 
-    tokenizer, model, class_names, device = init_config()
-    for i in range(0, len(reviews), split_val):
-        split_reviews.append(reviews[i:i + split_val])
+    # tokenizer, model, class_names, device = init_config()
+    # for i in range(0, len(reviews), split_val):
+    #     split_reviews.append(reviews[i:i + split_val])
 
-    #write split_reviews to a json file
+    # write split_reviews to a json file
     # with open('./data-dump/split_reviews.json', 'w') as f:
     #     json.dump(split_reviews, f)
 

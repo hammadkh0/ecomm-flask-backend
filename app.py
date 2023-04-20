@@ -1,5 +1,5 @@
 import asyncio
-from flask import Flask, request, json
+from flask import Flask, request, json, Response, stream_with_context
 from flask_cors import CORS
 from flask_caching import Cache
 from configs import make_search_asin_cache_key
@@ -244,28 +244,25 @@ def get_supplier_product_details():
 
 @app.route('/ecomm/sentiment', methods=['POST'])
 def analyze_sentiment():
-    if request.method == 'OPTIONS':
-        headers = {
-            'Access-Control-Allow-Origin':
-            '*',
-            'Access-Control-Allow-Methods':
-            'POST',
-            'Access-Control-Allow-Headers':
-            'Content-Type, Authorization, Access-Control-Allow-Origin'
-        }
-        return ('', 204, headers)
-    else:
-        sentiment_data = []
-        request_data = request.get_json()
+    # Retrieve the reviews from the request
+    reviews = request.get_json().get('reviews')
+    batch_size = 1
 
-        # app.logger.info("" + request_data)
-        reviews = request_data['reviews']
-        sentiment_data = get_sentiment(reviews)
+    # Define a generator function to yield batches of results
+    def generate():
+        # Iterate over the reviews in batches
+        for i in range(0, len(reviews), batch_size):
+            # Extract the current batch of reviews
+            batch = reviews[i:i + batch_size]
 
-        response = app.response_class(response=json.dumps(sentiment_data),
-                                      status=200,
-                                      mimetype='application/json')
-        return response
+            # Perform sentiment analysis on the batch of reviews
+            results = get_sentiment(batch)
+
+            # Yield the results as a JSON response
+            yield json.dumps({'results': results, 'analyzed': (i+batch_size), 'total_reviews': len(reviews)}) + '\n'
+
+    # Return the generator function wrapped in Flask's stream_with_context function
+    return Response(stream_with_context(generate()), content_type='application/json')
 
 
 @app.route('/ecomm/summary', methods=['POST'])
