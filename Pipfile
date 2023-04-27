@@ -20,6 +20,9 @@ requests-cache = "*"
 flask-caching = "*"
 flask-cors = "*"
 beautifulsoup4 = "*"
+pillow = "*"
+rembg = "*"
+torpy = "*"
 
 [dev-packages]
 yapf = "*"

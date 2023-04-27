@@ -2,6 +2,10 @@ import asyncio
 from flask import Flask, request, json, Response, stream_with_context
 from flask_cors import CORS
 from flask_caching import Cache
+from io import BytesIO
+from PIL import Image
+import rembg
+
 from configs import make_search_asin_cache_key
 
 from sentiment import get_sentiment
@@ -333,6 +337,26 @@ def get_trends():
                 status=500,
                 mimetype='application/json')
             return response
+
+
+@app.route('/ecomm/remove_background', methods=['POST'])
+def remove_background():
+    # Get the image data from the request
+    image_data = request.get_data()
+
+    # Convert the image data to a PIL image
+    img = Image.open(BytesIO(image_data))
+
+    # Remove the background using the "rembg" library
+    output = rembg.remove(img)
+
+    # Convert the output image to blob data
+    output_data = BytesIO()
+    output.save(output_data, format='png')
+    output_data = output_data.getvalue()
+
+    # Return the output image as a blob
+    return output_data, 200, {'Content-Type': 'image/png'}
 
 
 @app.route('/about')
