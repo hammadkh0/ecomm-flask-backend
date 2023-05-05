@@ -19,6 +19,8 @@ from trends import get_related_results, get_trends_by_region
 import math
 import json
 
+from utils.translate import translate_listing
+
 # create the Flask app
 app = Flask(__name__)
 CORS(app)
@@ -357,6 +359,18 @@ def remove_background():
 
     # Return the output image as a blob
     return output_data, 200, {'Content-Type': 'image/png'}
+
+
+@app.route("/ecomm/translate", methods=['POST'])
+def translate():
+    request_data = request.get_json()
+    text = request_data['markdown']
+    target_lang = request_data['targetLanguage']
+    translated = translate_listing(text, target_lang)
+    response = app.response_class(response=json.dumps(translated),
+                                  status=200,
+                                  mimetype='application/json')
+    return response
 
 
 @app.route('/about')
