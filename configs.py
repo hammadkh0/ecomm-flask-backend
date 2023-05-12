@@ -12,7 +12,7 @@ def selenium_config():
     user_agent = ua.random
 
     options = Options()
-    options.add_argument("--headless")
+    # options.add_argument("--headless")
     options.add_argument(f'user-agent={user_agent})')
     # add incognito mode to options
     options.add_argument("--incognito")
@@ -25,7 +25,7 @@ def selenium_config():
 
     driver.set_window_size(1366, 768)
     # simulate headless mode by minimizing the window
-    #driver.set_window_position(-2000, 0)
+    # driver.set_window_position(-2000, 0)
     return driver
 
 

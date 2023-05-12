@@ -18,9 +18,9 @@ def find_product_list(url, user_input):
 
     driver = selenium_config()
 
-    #load page with beautiful soup
+    # load page with beautiful soup
     driver.get(url)
-    #driver.get_screenshot_as_file("screenshot1.png")
+    # driver.get_screenshot_as_file("screenshot1.png")
 
     # find the search bar and enter the input
     driver.find_element(By.ID, "twotabsearchtextbox").send_keys(user_input)
@@ -177,7 +177,7 @@ def find_product_reviews(url, asin='B098FKXT8L'):
         if results is None:
             pass
         else:
-            #reviews = [*reviews, *list(results)]
+            # reviews = [*reviews, *list(results)]
             reviews = reviews + list(chain(*results))
 
     return {"reviews": reviews, "item_count": len(reviews)}
@@ -203,7 +203,7 @@ def find_best_sellers():
             category_name = ""
 
         sub_list = []
-        for i in range(2):
+        for i in range(4):
             best_items = category.find_elements(By.CSS_SELECTOR,
                                                 '.a-carousel-card')
 
@@ -251,7 +251,7 @@ def find_best_sellers():
 
             category.find_elements(By.CSS_SELECTOR,
                                    ".a-button-inner")[0].click()
-            time.sleep(1.7)
+            time.sleep(1.9)
         best_sellers.append({"category": category_name, "items": sub_list})
 
     return best_sellers
