@@ -164,14 +164,22 @@ def get_best_sellers():
         }
         return ('', 204, headers)
     else:
+        cached_response = cache.get('best_sellers')
+        if cached_response:
+            return cached_response
 
         try:
-            data = best_seller_request()
 
+            data = best_seller_request()
+            if len(data) == 0:
+                raise Exception("No data found")
+
+            cache.set('best_sellers', data)
             return app.response_class(response=json.dumps(data),
                                       status=200,
                                       mimetype='application/json')
         except Exception as e:
+            cache.delete('best_sellers')
             response = app.response_class(response=json.dumps({
                 "ERROR": str(e),
                 "status": 500
@@ -347,9 +355,10 @@ def remove_background():
 
     # Convert the image data to a PIL image
     img = Image.open(BytesIO(image_data))
-
+    new_image = img.resize((1000, 1000))
+    # img.thumbnail((1000, 1000), Image.ANTIALIAS)
     # Remove the background using the "rembg" library
-    output = rembg.remove(img)
+    output = rembg.remove(new_image)
 
     # Convert the output image to blob data
     output_data = BytesIO()
@@ -377,7 +386,6 @@ def about():
     return 'About'
 
 
-##if __name__ == '__main__':
-##    # run app in debug mode on port 5000
-##    app.run(debug=True, host='0.0.0.0', port=5000)
-##
+if __name__ == '__main__':
+    # run app in debug mode on port 5000
+    app.run(debug=True, host='0.0.0.0', port=5000)
