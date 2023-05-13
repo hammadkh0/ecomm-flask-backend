@@ -4,6 +4,7 @@ from flask_caching import Cache
 from io import BytesIO
 from PIL import Image
 import rembg
+import theb
 
 from configs import make_search_asin_cache_key
 
@@ -355,10 +356,10 @@ def remove_background():
 
     # Convert the image data to a PIL image
     img = Image.open(BytesIO(image_data))
-    new_image = img.resize((1000, 1000))
-    # img.thumbnail((1000, 1000), Image.ANTIALIAS)
+    # Resize the image to a maximum of 1000x1000 pixels. If the image is smaller than this, it will not be resized because of thumbnail function.
+    img.thumbnail((1000, 1000), Image.ANTIALIAS)
     # Remove the background using the "rembg" library
-    output = rembg.remove(new_image)
+    output = rembg.remove(img)
 
     # Convert the output image to blob data
     output_data = BytesIO()
@@ -379,6 +380,21 @@ def translate():
                                   status=200,
                                   mimetype='application/json')
     return response
+
+
+@app.route("/ecomm/generate-listing", methods=['POST'])
+def generate():
+    request_data = request.get_json()
+    prompt = request_data['prompt']
+    response = ""
+    for token in theb.Completion.create(prompt):
+        # print(token, end='', flush=True)
+        response += token
+    print(response)
+    return app.response_class(response=json.dumps({"response": response}),
+                              status=200,
+                              mimetype='application/json')
+    # return Response(stream_with_context(theb.Completion.create(prompt)), content_type='application/json')
 
 
 @app.route('/about')
