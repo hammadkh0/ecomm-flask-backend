@@ -58,15 +58,20 @@ def scrape_amazon_product_from_rows(url, row):
     price = row.find('span', {'class': 'a-offscreen'})
     price = "" if price is None else price.text
 
-    rating = row.find('div', {
+    rating_row = row.find('div', {
         "class": "a-row a-size-small"
-    }).find('span', {'class': 'a-icon-alt'})
-    rating = "" if rating is None else rating.text
-    # rating = 4.4 out of 5 stars so split by whitespace and take the first element
-    rating = rating.split(" ")[0]
+    })
+    rating = ""
+    rating_count = ""
+    if rating_row is not None:
+        rating = rating_row.find('span', {'class': 'a-icon-alt'})
+        rating = "" if rating is None else rating.text
+        # rating = 4.4 out of 5 stars so split by whitespace and take the first element
+        rating = rating.split(" ")[0]
 
-    rating_count = row.find('span', {'class': 'a-size-base s-underline-text'})
-    rating_count = "" if rating_count is None else rating_count.text
+        rating_count = row.find(
+            'span', {'class': 'a-size-base s-underline-text'})
+        rating_count = "" if rating_count is None else rating_count.text
 
     link = row.find('span', {
         'data-component-type': 's-product-image'
@@ -150,7 +155,7 @@ def scrape_alibaba_product_from_rows(driver_row):
     title = soup.find('h2', {"class": "elements-title-normal__outter"})
     title_text = "" if title is None else title["title"]
 
-    #find the link
+    # find the link
     link = title.find('a')
     link = "" if link is None else link['href']
 
@@ -159,12 +164,12 @@ def scrape_alibaba_product_from_rows(driver_row):
                             {"class": "elements-offer-price-normal__price"})
     price_range = "" if price_range is None else price_range.text
 
-    #find the min order quantity
+    # find the min order quantity
     min_order = soup.find('span',
                           {"class": "element-offer-minorder-normal__value"})
     min_order = "" if min_order is None else min_order.text
 
-    #find other properties
+    # find other properties
     extras = {}
     details = soup.find_all(
         'p', {"class": "organic-list-offer-center__property-item"})

@@ -11,46 +11,24 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def product_list_request(url, user_input):
-    # with TorRequests() as tor_requests:
-    # with tor_requests.get_session() as sess:
+    with TorRequests() as tor_requests:
+        with tor_requests.get_session() as sess:
 
-    # -- print the IP address of the proxy
-    # print(sess.get("http://httpbin.org/ip").json())
+            # -- print the IP address of the proxy
+            print(sess.get("http://httpbin.org/ip").json())
 
-    # -- pause randomly between 1 to 3 seconds
-    # time.sleep(random.randint(1, 3))
+            # -- pause randomly between 1 to 3 seconds
+            # time.sleep(random.randint(1, 3))
 
-    # -- get the html content
-    # html_content = sess.get(url, headers=HEADERS, timeout=10).text
+            # -- get the html content
+            # html_content = sess.get(url, headers=HEADERS, timeout=10).text
 
-    # -- your scraping code here ..
-    data = find_product_list(url, user_input)
-    return data
+            # -- your scraping code here ..
+            data = find_product_list(url, user_input)
+            return data
 
 
 def specific_product_request(url, asin):
-    # with TorRequests() as tor_requests:
-    # with tor_requests.get_session() as sess:
-
-    # -- print the IP address of the proxy
-    # print(sess.get("http://httpbin.org/ip").json())
-
-    # -- pause randomly between 1 to 3 seconds
-    # time.sleep(random.randint(1, 3))
-
-    # -- your scraping code here ..
-    data = find_product_details(url, asin)
-    return data
-
-
-def product_reviews_request(url):
-
-    # -- your scraping code here ..
-    data = find_product_reviews(url)
-    return data
-
-
-def best_seller_request():
     with TorRequests() as tor_requests:
         with tor_requests.get_session() as sess:
 
@@ -61,5 +39,27 @@ def best_seller_request():
             # time.sleep(random.randint(1, 3))
 
             # -- your scraping code here ..
-            data = find_best_sellers()
+            data = find_product_details(url, asin)
             return data
+
+
+def product_reviews_request(url):
+
+    # -- your scraping code here ..
+    data = find_product_reviews(url)
+    return data
+
+
+def best_seller_request():
+    # with TorRequests() as tor_requests:
+    # with tor_requests.get_session() as sess:
+
+    # -- print the IP address of the proxy
+    # print(sess.get("http://httpbin.org/ip").json())
+
+    # -- pause randomly between 1 to 3 seconds
+    # time.sleep(random.randint(1, 3))
+
+    # -- your scraping code here ..
+    data = find_best_sellers()
+    return data

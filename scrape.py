@@ -203,7 +203,7 @@ def find_best_sellers():
             category_name = ""
 
         sub_list = []
-        for i in range(4):
+        for i in range(2):
             best_items = category.find_elements(By.CSS_SELECTOR,
                                                 '.a-carousel-card')
 
