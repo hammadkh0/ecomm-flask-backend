@@ -4,7 +4,6 @@ from flask_caching import Cache
 from io import BytesIO
 from PIL import Image
 import rembg
-import theb
 
 from configs import make_search_asin_cache_key
 
@@ -20,6 +19,7 @@ import math
 import json
 
 from utils.translate import translate_listing
+import you
 
 # create the Flask app
 app = Flask(__name__)
@@ -386,12 +386,15 @@ def translate():
 def generate():
     request_data = request.get_json()
     prompt = request_data['prompt']
-    response = ""
-    for token in theb.Completion.create(prompt):
-        # print(token, end='', flush=True)
-        response += token
-    print(response)
-    return app.response_class(response=json.dumps({"response": response}),
+    # response = ""
+    # for token in theb.Completion.create(prompt):
+    #     # print(token, end='', flush=True)
+    #     response += token
+    response = you.Completion.create(
+        prompt=prompt,
+        detailed=True,
+        include_links=True, )
+    return app.response_class(response=json.dumps({"response": response.text}),
                               status=200,
                               mimetype='application/json')
     # return Response(stream_with_context(theb.Completion.create(prompt)), content_type='application/json')

@@ -25,6 +25,8 @@ rembg = "*"
 torpy = "*"
 googletrans = "==3.1.0a0"
 curl-cffi = "*"
+retrying = "*"
+tls-client = "*"
 
 [dev-packages]
 yapf = "*"
