@@ -129,11 +129,20 @@ def find_product_details(url, asin):
 
     # get the description of the product
     description = soup.find(id="productDescription")
-    description2 = description.find('p').span
-    if (description2 is None):
-        description2 = description.find_all('p')[1].span
+    description_txt = ""
+    if description is not None:
+        description2 = description.find('p').span
+        description_txt = ""
+        if (description2 is None):
+            description2 = description.find_all('p')
+            # loop over all the span tags and get the text
+            for p in description2:
+                span = p.span
+                if span is not None:
+                    description_txt = description_txt + span.text.strip()
 
-    description_txt = "" if description2 is None else description2.text.strip()
+        else:
+            description_txt = description2.text.strip()
 
     # get the reviews link of the product
     reviews_link = soup.find('a', {'data-hook': 'see-all-reviews-link-foot'})
